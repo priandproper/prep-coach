@@ -9,7 +9,9 @@ import { RESOURCES } from '../data/resources.js';
 
 let pomo = null;              // persists across re-renders so a running timer survives
 let selectedSpaceId = null;
-let spaceConfirmed = false;
+let spaceChecks = new Set();  // indices of checked setup items for the current space
+let audioCtx = null;          // unlocked on first Start; drives the break chime
+let lastBase = 'idle';        // last pomodoro phase base, to chime only on real transitions
 
 // ---- task derivation ----
 export function tasksForDay(iso, sched, plan) {
@@ -75,12 +77,12 @@ export function render(root) {
     statsRow(plan, sched, dayIdx, doneCount, tasks.length),
     h('div.grid.grid-2', {}, [
       h('div', {}, [
+        focusCard(config),
         checklistCard(iso, tasks, done),
-        scheduleCard(iso, blocks),
       ]),
       h('div', {}, [
-        focusCard(config),
         jobMiniCard(config),
+        scheduleCard(iso, blocks),
       ]),
     ]),
   ]);
@@ -133,13 +135,10 @@ function riskBanner(plan, config, sched, iso, dayIdx, tasks, doneCount, allDone)
 function statsRow(plan, sched, dayIdx, doneCount, total) {
   const streak = computeStreak(plan, sched);
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
-  const overallDone = countAllDone(plan, sched);
-  const overallTotal = countAllTasks(plan, sched);
   return h('div.statrow.mb', {}, [
     h('div.stat', {}, [h('div', { class: 'n ' + (streak > 0 ? 'good' : '') }, `🔥 ${streak}`), h('div.l', {}, 'Day streak')]),
     h('div.stat', {}, [h('div.n', {}, `${dayIdx + 1}/${plan.horizonDays}`), h('div.l', {}, 'Sprint day')]),
     h('div.stat', {}, [h('div', { class: 'n ' + (pct === 100 ? 'good' : pct > 0 ? 'warn' : 'bad') }, `${pct}%`), h('div.l', {}, 'Today complete')]),
-    h('div.stat', {}, [h('div.n', {}, `${overallDone}/${overallTotal}`), h('div.l', {}, 'Tasks overall')]),
   ]);
 }
 
@@ -195,78 +194,89 @@ function scheduleCard(iso, blocks) {
 function focusCard(config) {
   ensurePomo(config);
   const spaces = (config.studySpaces || []).filter(s => s.active);
-  const space = spaces.find(s => s.id === selectedSpaceId) || null;
+  const space = spaces.find(s => s.id === selectedSpaceId) || spaces[0] || null;
+  selectedSpaceId = space ? space.id : null;
+
+  const idleMsg = () => (pomo.completed
+    ? `${pomo.completed} focus block${pomo.completed > 1 ? 's' : ''} done today`
+    : 'Tap start whenever you’re ready');
 
   const timeEl = h('div.pomo-time', {}, Pomodoro.fmt(pomo.remaining || pomo.cfg.work * 60));
   const phaseEl = h('div.pomo-phase', {}, phaseLabel(pomo.phase));
-  const countEl = h('div.pomo-count', {}, `Completed focus blocks: ${pomo.completed}`);
+  const countEl = h('div.pomo-count', {}, idleMsg());
   const wrap = h('div', { class: 'pomo ' + pomoClass(pomo.phase) }, [phaseEl, timeEl]);
 
   pomo.onTick = (sec) => { timeEl.textContent = Pomodoro.fmt(sec); };
   pomo.onPhase = (ph) => {
     phaseEl.textContent = phaseLabel(ph);
     wrap.className = 'pomo ' + pomoClass(ph);
-    countEl.textContent = `Completed focus blocks: ${pomo.completed}`;
+    countEl.textContent = idleMsg();
+    const base = String(ph).split(':')[0];
+    if (base !== lastBase) { playBeep(); lastBase = base; } // chime on real transitions
   };
 
-  const spaceButtons = h('div.spaces', {}, spaces.map(s =>
-    h('button', {
-      class: 'space-btn' + (s.id === selectedSpaceId ? ' active' : ''),
-      onclick: () => { selectedSpaceId = s.id; spaceConfirmed = false; rerenderFocus(config); },
-    }, s.label)));
+  // One tap to start — no gating. The chime signals work/break changes.
+  const startBtn = h('button.btn.primary', {
+    onclick: () => { unlockAudio(); pomo.start('work'); toast('Focus started — go.'); },
+  }, '▶ Start focus');
+  const controls = h('div.pomo-controls', {}, [
+    startBtn,
+    h('button.btn.ghost.sm', { onclick: () => { pomo.running ? pomo.pause() : pomo.resume(); pomo.onPhase(pomo.phase); } }, 'Pause'),
+    h('button.btn.ghost.sm', { onclick: () => { pomo.stop(); lastBase = 'idle'; pomo.onPhase('idle'); pomo.onTick(pomo.cfg.work * 60); } }, 'Reset'),
+  ]);
 
-  let checklistBox = null;
+  // Optional pre-flight ritual — nice at a desk, ignorable on the go. Never blocks start.
+  let setup = null;
   if (space) {
-    const boxes = space.checklist.map((item, i) => {
-      const cb = h('input', { type: 'checkbox', onchange: () => updateConfirm(space, checklistBox) });
-      return h('label.checkline', {}, [cb, h('span', {}, item)]);
-    });
-    checklistBox = h('div', {}, boxes);
+    const spaceButtons = spaces.length > 1 ? h('div.spaces', {}, spaces.map(s =>
+      h('button', {
+        class: 'space-btn' + (s.id === selectedSpaceId ? ' active' : ''),
+        onclick: () => { selectedSpaceId = s.id; rerenderFocus(config); },
+      }, s.label))) : null;
+    const boxes = space.checklist.map((item) =>
+      h('label.checkline', {}, [h('input', { type: 'checkbox' }), h('span', {}, item)]));
+    setup = h('details', {}, [
+      h('summary', {}, 'Optional: study-space setup'),
+      h('p.hint', { style: 'margin:8px 0' }, 'A quick ritual for deep focus — use it or skip it.'),
+      spaceButtons,
+      h('div', { style: 'margin-top:8px' }, boxes),
+    ]);
   }
 
-  const startBtn = h('button', {
-    class: 'btn primary', disabled: !space || !spaceConfirmed,
-    onclick: () => { pomo.start('work'); pomo.onPhase(pomo.phase); toast('Focus block started — phone away.'); },
-  }, '▶ Start focus block');
-  const startWrap = h('div', {}, [startBtn]);
-  focusStartRef = () => { startBtn.disabled = !space || !spaceConfirmed; };
-
-  const controls = h('div.pomo-controls', {}, [
-    startWrap,
-    h('button.btn.ghost.sm', { onclick: () => { pomo.running ? pomo.pause() : pomo.resume(); pomo.onPhase(pomo.phase); } }, 'Pause / resume'),
-    h('button.btn.ghost.sm', { onclick: () => { pomo.stop(); pomo.onPhase('idle'); pomo.onTick(pomo.cfg.work * 60); } }, 'Reset'),
-  ]);
-
-  const permBtn = permission() !== 'granted'
-    ? h('button.btn.sm.mt', { onclick: async () => { const p = await requestPermission(); toast(p === 'granted' ? 'Notifications on.' : 'Notifications blocked — enable in browser settings.'); } }, '🔔 Enable notifications')
-    : null;
-
-  focusCardRef = () => rerenderFocus(config);
-
   return h('div.card#focusCard', {}, [
-    h('h2', {}, 'Focus session'),
-    h('p.sub', {}, 'Set up your space, then run a Pomodoro. You can’t start until the environment checklist is done — including phone away.'),
-    wrap, controls, countEl,
-    h('hr.sep'),
-    h('h3', {}, 'Study space'),
-    spaceButtons,
-    space ? h('p.sub', {}, `Set up “${space.label}” before you start:`) : h('p.sub', {}, 'Pick where you’re studying.'),
-    checklistBox,
-    permBtn,
+    h('h2', {}, 'Focus timer'),
+    wrap,
+    controls,
+    countEl,
+    setup,
   ]);
 }
 
-let focusStartRef = null;
-let focusCardRef = null;
-function updateConfirm(space, box) {
-  const all = [...box.querySelectorAll('input[type=checkbox]')].every(c => c.checked);
-  spaceConfirmed = all;
-  if (focusStartRef) focusStartRef();
-  if (all) toast('Space ready. Start your focus block.');
-}
 function rerenderFocus(config) {
   const old = document.getElementById('focusCard');
   if (old) old.replaceWith(focusCard(config));
+}
+
+// Audio chime — reliable on phones where web notifications don't fire.
+// Unlocked on the first Start tap (a user gesture), then usable from timers.
+function unlockAudio() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) { /* no audio available */ }
+}
+function playBeep() {
+  if (!audioCtx) return;
+  try {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'sine'; o.frequency.value = 880;
+    const t = audioCtx.currentTime;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.35, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+    o.start(t); o.stop(t + 0.42);
+  } catch (e) { /* ignore */ }
 }
 
 function jobMiniCard(config) {
