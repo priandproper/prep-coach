@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>prep-coach</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◎</span>
+      <span class="brand-name">prep-coach</span>
+      <span class="brand-tag" id="goalTag">SQL sprint</span>
+    </div>
+    <nav class="nav" id="nav">
+      <a href="#/today" data-route="today">Today</a>
+      <a href="#/plan" data-route="plan">Plan</a>
+      <a href="#/jobs" data-route="jobs">Job search</a>
+      <a href="#/config" data-route="config">Setup</a>
+    </nav>
+    <div class="topbar-right">
+      <span class="streak-chip" id="streakChip" title="Current streak">🔥 <span id="streakNum">0</span></span>
+    </div>
+  </header>
+
+  <main id="view" class="view"><!-- routed content --></main>
+
+  <footer class="footer">
+    <span id="ead-mini"></span>
+    <span class="dot">·</span>
+    <button class="linklike" id="exportData">Backup data</button>
+    <span class="dot">·</span>
+    <button class="linklike" id="importData">Restore</button>
+    <span class="dot">·</span>
+    <button class="linklike danger" id="resetData">Reset all</button>
+    <input type="file" id="importFile" accept="application/json" hidden />
+  </footer>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
