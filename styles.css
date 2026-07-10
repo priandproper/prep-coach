@@ -360,10 +360,42 @@ hr.sep { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
 .fo-end:hover { border-color: #f3ead9; background: rgba(243, 234, 217, 0.08); }
 
 .fo-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; }
+/* circular progress dial + breathing glow */
+.fo-dial {
+  position: relative; width: clamp(230px, 72vw, 360px); aspect-ratio: 1 / 1;
+  display: grid; place-items: center;
+  animation: fo-pop 0.5s cubic-bezier(.2, .8, .2, 1) both;
+}
+.fo-dial::before {
+  content: ""; position: absolute; inset: 11%; border-radius: 50%; z-index: 0;
+  background: radial-gradient(circle, rgba(158, 199, 160, 0.22), rgba(158, 199, 160, 0) 70%);
+  animation: fo-breathe 6s ease-in-out infinite;
+}
+.focus-overlay.break .fo-dial::before { background: radial-gradient(circle, rgba(230, 180, 152, 0.22), rgba(230, 180, 152, 0) 70%); }
+.fo-dial.paused::before { animation-play-state: paused; }
+.fo-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.fo-ring-track { fill: none; stroke: rgba(243, 234, 217, 0.12); stroke-width: 5; }
+.fo-ring-prog {
+  fill: none; stroke: #e8dcc4; stroke-width: 5; stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear, stroke 0.6s ease;
+  filter: drop-shadow(0 0 8px rgba(232, 220, 196, 0.45));
+}
+.focus-overlay.break .fo-ring-prog { stroke: #e6b498; filter: drop-shadow(0 0 8px rgba(230, 180, 152, 0.5)); }
+
 .fo-time {
+  position: relative; z-index: 1;
   font-family: var(--serif); font-weight: 700; line-height: 1;
-  font-size: clamp(56px, 16vw, 150px); font-variant-numeric: tabular-nums; letter-spacing: 1px;
+  font-size: clamp(52px, 15vw, 140px); font-variant-numeric: tabular-nums; letter-spacing: 1px;
   max-width: 100%;
+}
+
+@keyframes fo-breathe { 0%, 100% { transform: scale(0.92); opacity: 0.5; } 50% { transform: scale(1.08); opacity: 1; } }
+@keyframes fo-pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes fo-drift { from { background-position: 50% 0%; } to { background-position: 50% 34%; } }
+.focus-overlay.focus, .focus-overlay.break { background-size: 150% 150%; animation: fo-fade 0.35s ease, fo-drift 20s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) {
+  .fo-dial, .fo-dial::before, .focus-overlay.focus, .focus-overlay.break { animation: none; }
+  .fo-ring-prog { transition: none; }
 }
 .fo-task { text-align: center; max-width: 540px; transition: opacity 0.4s; }
 .fo-task-label { font-size: 11px; letter-spacing: 3px; color: rgba(243, 234, 217, 0.5); font-weight: 700; margin-bottom: 9px; }

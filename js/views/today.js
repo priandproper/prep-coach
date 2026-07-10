@@ -256,7 +256,20 @@ function openFocusMode(config) {
   focusSeconds = 0;
   lastBase = 'idle';
 
+  // Circular progress dial that drains as the block counts down.
+  const R = 118, C = 2 * Math.PI * R;
+  const dial = h('div.fo-dial', {
+    html:
+      '<svg class="fo-ring" viewBox="0 0 260 260" aria-hidden="true">' +
+      '<circle class="fo-ring-track" cx="130" cy="130" r="' + R + '"/>' +
+      '<circle class="fo-ring-prog" cx="130" cy="130" r="' + R + '" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="0"/>' +
+      '</svg>',
+  });
   const timeEl = h('div.fo-time', {}, Pomodoro.fmt(pomo.cfg.work * 60));
+  dial.appendChild(timeEl);
+  const progCircle = dial.querySelector('.fo-ring-prog');
+  let phaseTotal = pomo.cfg.work * 60;
+
   const phaseEl = h('div.fo-phase', {}, 'Focus');
   const taskBox = h('div.fo-task', {}, [
     h('div.fo-task-label', {}, 'NOW'),
@@ -266,8 +279,8 @@ function openFocusMode(config) {
 
   const pauseBtn = h('button.fo-btn', {
     onclick: () => {
-      if (pomo.running) { pomo.pause(); pauseBtn.textContent = 'Resume'; }
-      else { pomo.resume(); pauseBtn.textContent = 'Pause'; }
+      if (pomo.running) { pomo.pause(); pauseBtn.textContent = 'Resume'; dial.classList.add('paused'); }
+      else { pomo.resume(); pauseBtn.textContent = 'Pause'; dial.classList.remove('paused'); }
     },
   }, 'Pause');
   const skipBtn = h('button.fo-btn', { hidden: true, onclick: () => { lastBase = 'idle'; pomo.start('work'); } }, 'Skip break →');
@@ -275,13 +288,14 @@ function openFocusMode(config) {
 
   const overlay = h('div.focus-overlay.focus', {}, [
     h('div.fo-top', {}, [phaseEl, endBtn]),
-    h('div.fo-center', {}, [timeEl, taskBox]),
+    h('div.fo-center', {}, [dial, taskBox]),
     h('div.fo-controls', {}, [pauseBtn, skipBtn]),
   ]);
 
   pomo.onTick = (sec) => {
     timeEl.textContent = Pomodoro.fmt(sec);
     if (pomo.phase === 'work') focusSeconds++;
+    if (progCircle && phaseTotal) progCircle.style.strokeDashoffset = (C * (1 - sec / phaseTotal)).toFixed(1);
   };
   pomo.onPhase = (ph) => {
     const base = String(ph).split(':')[0];
@@ -290,6 +304,8 @@ function openFocusMode(config) {
     overlay.className = 'focus-overlay ' + (isBreak ? 'break' : 'focus');
     taskBox.style.visibility = isBreak ? 'hidden' : 'visible';
     skipBtn.hidden = !isBreak;
+    phaseTotal = base === 'short' ? pomo.cfg.shortBreak * 60 : base === 'long' ? pomo.cfg.longBreak * 60 : pomo.cfg.work * 60;
+    if (progCircle) progCircle.style.strokeDashoffset = '0';
     if (base !== lastBase) { playBeep(); lastBase = base; }
   };
 
