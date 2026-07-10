@@ -9,9 +9,10 @@ import { RESOURCES } from '../data/resources.js';
 
 let pomo = null;              // persists across re-renders so a running timer survives
 let selectedSpaceId = null;
-let spaceChecks = new Set();  // indices of checked setup items for the current space
-let audioCtx = null;          // unlocked on first Start; drives the break chime
+let audioCtx = null;          // unlocked on first Start; drives the chime
 let lastBase = 'idle';        // last pomodoro phase base, to chime only on real transitions
+let focusOverlay = null;      // the full-screen focus-mode element
+let focusSeconds = 0;         // accumulated focused (work-phase) seconds this session
 
 // ---- task derivation ----
 export function tasksForDay(iso, sched, plan) {
@@ -197,33 +198,14 @@ function focusCard(config) {
   const space = spaces.find(s => s.id === selectedSpaceId) || spaces[0] || null;
   selectedSpaceId = space ? space.id : null;
 
-  const idleMsg = () => (pomo.completed
-    ? `${pomo.completed} focus block${pomo.completed > 1 ? 's' : ''} done today`
-    : 'Tap start whenever you’re ready');
+  const mins = store.dayRecord(store.todayISO()).studyMinutes || 0;
+  const statLine = mins > 0
+    ? `${mins} min focused today — nice work.`
+    : 'A distraction-free timer. The screen clears until you tap End.';
 
-  const timeEl = h('div.pomo-time', {}, Pomodoro.fmt(pomo.remaining || pomo.cfg.work * 60));
-  const phaseEl = h('div.pomo-phase', {}, phaseLabel(pomo.phase));
-  const countEl = h('div.pomo-count', {}, idleMsg());
-  const wrap = h('div', { class: 'pomo ' + pomoClass(pomo.phase) }, [phaseEl, timeEl]);
-
-  pomo.onTick = (sec) => { timeEl.textContent = Pomodoro.fmt(sec); };
-  pomo.onPhase = (ph) => {
-    phaseEl.textContent = phaseLabel(ph);
-    wrap.className = 'pomo ' + pomoClass(ph);
-    countEl.textContent = idleMsg();
-    const base = String(ph).split(':')[0];
-    if (base !== lastBase) { playBeep(); lastBase = base; } // chime on real transitions
-  };
-
-  // One tap to start — no gating. The chime signals work/break changes.
-  const startBtn = h('button.btn.primary', {
-    onclick: () => { unlockAudio(); pomo.start('work'); toast('Focus started — go.'); },
+  const startBtn = h('button.btn.primary.focus-start', {
+    onclick: () => { unlockAudio(); openFocusMode(config); },
   }, '▶ Start focus');
-  const controls = h('div.pomo-controls', {}, [
-    startBtn,
-    h('button.btn.ghost.sm', { onclick: () => { pomo.running ? pomo.pause() : pomo.resume(); pomo.onPhase(pomo.phase); } }, 'Pause'),
-    h('button.btn.ghost.sm', { onclick: () => { pomo.stop(); lastBase = 'idle'; pomo.onPhase('idle'); pomo.onTick(pomo.cfg.work * 60); } }, 'Reset'),
-  ]);
 
   // Optional pre-flight ritual — nice at a desk, ignorable on the go. Never blocks start.
   let setup = null;
@@ -244,10 +226,9 @@ function focusCard(config) {
   }
 
   return h('div.card#focusCard', {}, [
-    h('h2', {}, 'Focus timer'),
-    wrap,
-    controls,
-    countEl,
+    h('h2', {}, 'Focus'),
+    h('p.sub', {}, statLine),
+    startBtn,
     setup,
   ]);
 }
@@ -255,6 +236,105 @@ function focusCard(config) {
 function rerenderFocus(config) {
   const old = document.getElementById('focusCard');
   if (old) old.replaceWith(focusCard(config));
+}
+
+// ---- full-screen focus mode ----
+function currentTaskInfo(iso, sched, plan) {
+  const tasks = tasksForDay(iso, sched, plan);
+  const done = new Set(store.dayRecord(iso).taskIds);
+  const next = tasks.find(t => !done.has(t.id));
+  if (next) return { task: next.title, topic: next.topic.title };
+  if (tasks.length) return { task: 'All of today’s tasks are done', topic: 'Bonus focus time' };
+  return { task: 'Deep work', topic: 'Focus session' };
+}
+
+function openFocusMode(config) {
+  const plan = store.plan();
+  const sched = buildSchedule(plan, config);
+  const iso = store.todayISO();
+  const info = currentTaskInfo(iso, sched, plan);
+  focusSeconds = 0;
+  lastBase = 'idle';
+
+  const timeEl = h('div.fo-time', {}, Pomodoro.fmt(pomo.cfg.work * 60));
+  const phaseEl = h('div.fo-phase', {}, 'Focus');
+  const taskBox = h('div.fo-task', {}, [
+    h('div.fo-task-label', {}, 'NOW'),
+    h('div.fo-task-title', {}, info.task),
+    h('div.fo-task-topic', {}, info.topic),
+  ]);
+
+  const pauseBtn = h('button.fo-btn', {
+    onclick: () => {
+      if (pomo.running) { pomo.pause(); pauseBtn.textContent = 'Resume'; }
+      else { pomo.resume(); pauseBtn.textContent = 'Pause'; }
+    },
+  }, 'Pause');
+  const skipBtn = h('button.fo-btn', { hidden: true, onclick: () => { lastBase = 'idle'; pomo.start('work'); } }, 'Skip break →');
+  const endBtn = h('button.fo-end', { onclick: () => endFocusMode(iso) }, 'End session');
+
+  const overlay = h('div.focus-overlay.focus', {}, [
+    h('div.fo-top', {}, [phaseEl, endBtn]),
+    h('div.fo-center', {}, [timeEl, taskBox]),
+    h('div.fo-controls', {}, [pauseBtn, skipBtn]),
+  ]);
+
+  pomo.onTick = (sec) => {
+    timeEl.textContent = Pomodoro.fmt(sec);
+    if (pomo.phase === 'work') focusSeconds++;
+  };
+  pomo.onPhase = (ph) => {
+    const base = String(ph).split(':')[0];
+    const isBreak = base === 'short' || base === 'long';
+    phaseEl.textContent = isBreak ? 'Break — rest your eyes' : (base === 'work' ? 'Focus' : phaseLabel(ph));
+    overlay.className = 'focus-overlay ' + (isBreak ? 'break' : 'focus');
+    taskBox.style.visibility = isBreak ? 'hidden' : 'visible';
+    skipBtn.hidden = !isBreak;
+    if (base !== lastBase) { playBeep(); lastBase = base; }
+  };
+
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+  focusOverlay = overlay;
+  try { (overlay.requestFullscreen || overlay.webkitRequestFullscreen || (() => {})).call(overlay); } catch (e) { /* iOS: already chromeless */ }
+
+  pomo.start('work');
+}
+
+function endFocusMode(iso) {
+  pomo.stop();
+  try { (document.exitFullscreen || document.webkitExitFullscreen || (() => {})).call(document); } catch (e) { /* ignore */ }
+  const mins = Math.max(0, Math.round(focusSeconds / 60));
+  const blocks = pomo.completed;
+  const rec = store.dayRecord(iso);
+  rec.studyMinutes = (rec.studyMinutes || 0) + mins;
+  rec.blocksCompleted = (rec.blocksCompleted || 0) + blocks;
+  pomo.completed = 0;
+  showFocusSummary(mins, blocks);
+  store.save();
+}
+
+function showFocusSummary(mins, blocks) {
+  if (!focusOverlay) return;
+  focusOverlay.className = 'focus-overlay done';
+  mount(focusOverlay, [
+    h('div.fo-summary', {}, [
+      h('div.fo-sum-emoji', {}, '🎉'),
+      h('div.fo-sum-title', {}, 'Session complete'),
+      h('div.fo-sum-stat', {}, `${mins} min focused`),
+      blocks ? h('div.fo-sum-sub', {}, `${blocks} focus block${blocks > 1 ? 's' : ''} done`) : h('div.fo-sum-sub', {}, 'Every minute counts.'),
+      h('button.fo-btn.primary', { onclick: closeFocusMode }, 'Back to dashboard'),
+    ]),
+  ]);
+}
+
+function closeFocusMode() {
+  if (focusOverlay) { focusOverlay.remove(); focusOverlay = null; }
+  document.body.style.overflow = '';
+  focusSeconds = 0;
+  lastBase = 'idle';
+  const root = document.getElementById('view');
+  if (root) render(root);
 }
 
 // Audio chime — reliable on phones where web notifications don't fire.
