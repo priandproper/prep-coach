@@ -284,6 +284,44 @@ hr.sep { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
 }
 .footer .dot { color: var(--line); }
 
+/* ---------- mobile / PWA ---------- */
+@media (max-width: 600px) {
+  html, body { font-size: 14.5px; }
+  .topbar {
+    gap: 9px; padding: 10px 14px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+    flex-wrap: wrap;
+  }
+  .brand-tag { display: none; }
+  .topbar-right { margin-left: auto; order: 2; }
+  .nav {
+    order: 3; width: 100%; margin-left: 0; gap: 2px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a { padding: 7px 13px; white-space: nowrap; }
+
+  .view { padding: 18px 14px 96px; }
+  .page-head h1 { font-size: 24px; }
+  .card { padding: 16px 16px; }
+  .card h2 { font-size: 18px; }
+
+  .statrow { gap: 10px; }
+  .stat { min-width: calc(50% - 5px); padding: 13px; }
+  .stat .n { font-size: 25px; }
+
+  .grid-2 { grid-template-columns: 1fr; }
+  .inline > * { min-width: 100%; }
+
+  .pomo-time { font-size: 46px; }
+  .tl-row { grid-template-columns: 50px 1fr; gap: 9px; }
+  .banner { padding: 14px; }
+
+  .btn-row .btn { flex: 1; }
+  .footer { padding: 16px 14px calc(30px + env(safe-area-inset-bottom)); }
+}
+
 /* ---------- modal ---------- */
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(43, 39, 33, 0.42); z-index: 50;
