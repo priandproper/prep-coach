@@ -88,7 +88,7 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
 
   return h('div.home', {}, [
     h('div.home-top', {}, [
-      h('span.home-eyebrow', {}, `DAY ${dayIdx + 1} OF ${plan.horizonDays}`),
+      h('span.home-eyebrow', {}, `DAY ${dayIdx + 1} · ${plan.horizonDays}-DAY SPRINT`),
       streak > 0 ? h('span.home-streak', {}, `🔥 ${streak}`) : null,
     ]),
     h('h1.home-topic', {}, topic),
@@ -96,7 +96,7 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
       h('div.progress', {}, [h('i', { class: pct === 100 ? 'good' : '', style: `width:${pct}%` })]),
       h('span.home-count', {}, allDone ? 'Done ✓' : `${doneCount}/${total}`),
     ]),
-    h('button.btn.primary.focus-start', { onclick: () => { unlockAudio(); openFocusMode(config); } }, '▶ Start focus'),
+    h('button.btn.primary.focus-start', { onclick: () => { unlockAudio(); openFocusMode(config); } }, 'Start focus →'),
     total
       ? h('div.home-tasks', {}, tasks.map((t, i) => taskRow(iso, t, done.has(t.id), i === firstUndone)))
       : h('p.home-empty', {}, 'Nothing scheduled today — rest up.'),
