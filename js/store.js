@@ -117,6 +117,17 @@ function migrate(s) {
   if (!s.config) s.config = base.config;
   // fill any missing config keys without clobbering user edits
   s.config = deepFill(s.config, base.config);
+
+  // refresh built-in curriculum wording when content version changes,
+  // preserving each topic's scheduling fields, dates, and progress.
+  if (s.plan.contentVersion !== SQL_PLAN.contentVersion) {
+    const src = Object.fromEntries(SQL_PLAN.topics.map(t => [t.id, t]));
+    for (const t of s.plan.topics || []) {
+      const o = src[t.id];
+      if (o) { t.title = o.title; t.summary = o.summary; t.checklist = o.checklist.slice(); t.resourceRefs = o.resourceRefs.slice(); }
+    }
+    s.plan.contentVersion = SQL_PLAN.contentVersion;
+  }
   return s;
 }
 
