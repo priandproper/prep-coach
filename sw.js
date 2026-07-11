@@ -1,10 +1,10 @@
 // sw.js — offline app-shell cache. Bump CACHE when you deploy changes so
 // installed phones pick up the new version.
-const CACHE = 'prepcoach-v11';
+const CACHE = 'prepcoach-v12';
 const ASSETS = [
   './', './index.html', './styles.css', './manifest.json',
   './js/app.js', './js/store.js', './js/ui.js', './js/scheduler.js',
-  './js/ics.js', './js/notify.js', './js/pomodoro.js',
+  './js/ics.js', './js/notify.js', './js/pomodoro.js', './js/confetti.js',
   './js/views/today.js', './js/views/plan.js', './js/views/config.js', './js/views/jobsearch.js',
   './js/data/sql-plan.js', './js/data/resources.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',

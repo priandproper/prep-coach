@@ -6,6 +6,7 @@ import { Pomodoro } from '../pomodoro.js';
 import { buildICS, downloadICS } from '../ics.js';
 import { requestPermission, permission } from '../notify.js';
 import { RESOURCES } from '../data/resources.js';
+import { burst } from '../confetti.js';
 
 let pomo = null;              // persists across re-renders so a running timer survives
 let selectedSpaceId = null;
@@ -36,11 +37,29 @@ function dayComplete(iso, sched, plan) {
   return tasks.every(t => done.has(t.id));
 }
 
-export function computeStreak(plan, sched) {
-  let streak = 0;
+// A day "counts" on a low, protectable bar: any task checked OR any focused time.
+function isActiveDay(iso) {
+  const rec = store.progress().days[iso];
+  if (!rec) return false;
+  return (rec.taskIds && rec.taskIds.length > 0) || (rec.studyMinutes || 0) > 0;
+}
+
+// Forgiving streak: a single missed day is auto-bridged (up to 2 "freezes");
+// only two misses in a row actually break it. Never punishes one off day.
+export function computeStreak() {
   let iso = store.todayISO();
-  if (!dayComplete(iso, sched, plan)) iso = store.addDays(iso, -1); // today not done yet → count up to yesterday
-  while (dayComplete(iso, sched, plan)) { streak++; iso = store.addDays(iso, -1); }
+  if (!isActiveDay(iso)) iso = store.addDays(iso, -1); // today may still be in progress
+  let streak = 0, freezes = 0, gap = 0;
+  const MAX_FREEZES = 2, MAX_ITER = 400;
+  for (let i = 0; i < MAX_ITER; i++) {
+    if (isActiveDay(iso)) { streak++; gap = 0; }
+    else {
+      gap++;
+      if (gap >= 2 || freezes >= MAX_FREEZES) break; // real break
+      freezes++; // bridge a single off day
+    }
+    iso = store.addDays(iso, -1);
+  }
   return streak;
 }
 
@@ -99,7 +118,7 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
       h('div.home-hero', {}, [
         total ? taskDial(iso, tasks, done, doneCount) : h('p.home-empty', {}, 'Nothing scheduled today — rest up.'),
         total ? dotsRow(iso, tasks, done) : null,
-        h('button.btn.primary.focus-start', { onclick: () => { unlockAudio(); openFocusMode(config); } }, 'Start focus →'),
+        h('button.btn.primary.focus-start', { onclick: () => { unlockAudio(); openFocusMode(config); } }, 'Start my session →'),
       ]),
     ]),
     // ── 2 · Job search ──
@@ -446,13 +465,14 @@ function showFocusSummary(mins, blocks) {
   focusOverlay.className = 'focus-overlay done';
   mount(focusOverlay, [
     h('div.fo-summary', {}, [
-      h('div.fo-sum-emoji', {}, '🎉'),
-      h('div.fo-sum-title', {}, 'Session complete'),
-      h('div.fo-sum-stat', {}, `${mins} min focused`),
-      blocks ? h('div.fo-sum-sub', {}, `${blocks} focus block${blocks > 1 ? 's' : ''} done`) : h('div.fo-sum-sub', {}, 'Every minute counts.'),
+      h('div.fo-sum-emoji', {}, '✦'),
+      h('div.fo-sum-title', {}, mins > 0 ? `${mins} min focused` : 'Session ended'),
+      h('div.fo-sum-stat', {}, blocks ? `${blocks} block${blocks > 1 ? 's' : ''}` : `${mins} min`),
+      h('div.fo-sum-sub', {}, 'A vote for the analyst you’re becoming.'),
       h('button.fo-btn.primary', { onclick: closeFocusMode }, 'Back to dashboard'),
     ]),
   ]);
+  if (mins > 0 || blocks > 0) burst({ origin: { x: 0.5, y: 0.42 } });
 }
 
 function closeFocusMode() {
@@ -522,8 +542,16 @@ function toggleTask(iso, taskId, on) {
   const set = new Set(rec.taskIds);
   on ? set.add(taskId) : set.delete(taskId);
   rec.taskIds = [...set];
-  // update lastCompletedDate bookkeeping
   store.save();
+  // Celebrate only the real milestone: clearing everything scheduled today.
+  if (on) {
+    const plan = store.plan(), config = store.config();
+    const dayTasks = tasksForDay(iso, buildSchedule(plan, config), plan);
+    if (dayTasks.length && dayTasks.every(t => set.has(t.id))) {
+      burst({ origin: { x: 0.5, y: 0.4 } });
+      toast('Day cleared — a vote for the analyst you’re becoming. ✓');
+    }
+  }
 }
 function logJob(field, n) {
   const week = store.weekStartISO();
