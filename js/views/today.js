@@ -90,21 +90,61 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
   if (heroTaskIdx == null || heroTaskIdx < 0 || heroTaskIdx >= total) heroTaskIdx = Math.max(0, firstUndone);
 
   return h('div.home', {}, [
-    streak > 0 ? h('div.home-streakbar', {}, h('span.home-streak', {}, `🔥 ${streak} day${streak > 1 ? 's' : ''}`)) : null,
-    h('div.home-hero', {}, [
-      h('div.home-eyebrow', {}, `DAY ${dayIdx + 1} · ${topic.toUpperCase()}`),
-      total ? taskDial(iso, tasks, done, doneCount) : h('p.home-empty', {}, 'Nothing scheduled today — rest up.'),
-      total ? dotsRow(iso, tasks, done) : null,
-      h('button.btn.primary.focus-start', { onclick: () => { unlockAudio(); openFocusMode(config); } }, 'Start focus →'),
+    // ── 1 · Study ──
+    h('section.home-sec', {}, [
+      h('div.sec-head', {}, [
+        h('span.sec-title', {}, 'Study'),
+        h('span.sec-note', {}, `Day ${dayIdx + 1} · ${topic}${streak > 0 ? ` · ${streak}-day streak` : ''}`),
+      ]),
+      h('div.home-hero', {}, [
+        total ? taskDial(iso, tasks, done, doneCount) : h('p.home-empty', {}, 'Nothing scheduled today — rest up.'),
+        total ? dotsRow(iso, tasks, done) : null,
+        h('button.btn.primary.focus-start', { onclick: () => { unlockAudio(); openFocusMode(config); } }, 'Start focus →'),
+      ]),
     ]),
-    blocks && blocks.length ? h('details.home-schedule', {}, [
-      h('summary', {}, 'Schedule'),
-      h('div.timeline', { style: 'margin-top:10px' }, blocks.map(b => h('div.tl-row', {}, [
-        h('div.tl-time', {}, b.start),
-        h('div', { class: 'tl-block ' + b.kind }, [h('div.t', {}, b.title), h('div.d.faint', {}, `${b.start}–${b.end}`)]),
-      ]))),
-      h('button.btn.sm.ghost.mt', { onclick: () => exportDay(iso, blocks) }, '📅 Export to calendar'),
+    // ── 2 · Job search ──
+    jobSection(config),
+    // ── 3 · Schedule ──
+    blocks && blocks.length ? h('section.home-sec', {}, [
+      h('details.home-schedule', {}, [
+        h('summary', {}, [h('span.sec-title', {}, 'Schedule')]),
+        h('div.timeline', { style: 'margin-top:14px' }, blocks.map(b => h('div.tl-row', {}, [
+          h('div.tl-time', {}, b.start),
+          h('div', { class: 'tl-block ' + b.kind }, [h('div.t', {}, b.title), h('div.d.faint', {}, `${b.start}–${b.end}`)]),
+        ]))),
+        h('button.btn.sm.ghost.mt', { onclick: () => exportDay(iso, blocks) }, '📅 Export to calendar'),
+      ]),
     ]) : null,
+  ]);
+}
+
+// Job-search section: log applications + coffee chats against weekly targets.
+function jobSection(config) {
+  const js = config.jobSearch;
+  const week = store.weekStartISO();
+  const log = store.progress().jobLog[week] || { applications: 0, coffeeChats: 0 };
+  return h('section.home-sec', {}, [
+    h('div.sec-head', {}, [
+      h('span.sec-title', {}, 'Job search'),
+      h('span.sec-note', {}, 'This week'),
+    ]),
+    jobCounter('Applications', log.applications, js.weeklyApplications, 'applications'),
+    jobCounter('Coffee chats', log.coffeeChats, js.weeklyCoffeeChats, 'coffeeChats'),
+  ]);
+}
+
+function jobCounter(label, val, target, field) {
+  const pct = target ? Math.min(100, Math.round((val / target) * 100)) : 0;
+  return h('div.jobrow', {}, [
+    h('div.jobrow-top', {}, [
+      h('span.jobrow-label', {}, label),
+      h('span.jobrow-count', {}, `${val} / ${target}`),
+      h('div.stepper', {}, [
+        h('button.jobbtn', { 'aria-label': 'Decrease', onclick: () => logJob(field, -1) }, '−'),
+        h('button.jobbtn', { 'aria-label': 'Increase', onclick: () => logJob(field, 1) }, '+'),
+      ]),
+    ]),
+    h('div.progress', {}, [h('i', { class: pct >= 100 ? 'good' : '', style: `width:${pct}%` })]),
   ]);
 }
 

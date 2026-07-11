@@ -37,8 +37,8 @@ function renderRoute() {
 
 function updateChrome() {
   const plan = store.plan();
-  const sched = buildSchedule(plan, store.config());
-  document.getElementById('streakNum').textContent = String(computeStreak(plan, sched));
+  const streakEl = document.getElementById('streakNum');
+  if (streakEl) streakEl.textContent = String(computeStreak(plan, buildSchedule(plan, store.config())));
   document.getElementById('goalTag').textContent = plan.goal.length > 22 ? plan.goal.slice(0, 22) + '…' : plan.goal;
   const days = store.daysBetween(store.todayISO(), store.config().jobSearch.eadDeadline);
   document.getElementById('ead-mini').textContent = `⏳ ${days} days to deadline`;

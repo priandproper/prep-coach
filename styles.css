@@ -170,12 +170,29 @@ a { color: var(--text); }
 .trow-links a { font-size: 12px; font-weight: 600; color: var(--text); background: var(--accent-soft); border: 1px solid var(--line-2); padding: 3px 10px; border-radius: 999px; text-decoration: none; }
 .trow-links a:hover { border-color: var(--accent); }
 
-.home-empty { color: var(--muted); margin-top: 22px; }
-.home-schedule { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 16px; }
-.home-schedule > summary { cursor: pointer; font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); list-style: none; }
+.home-empty { color: var(--muted); margin: 10px 0; text-align: center; }
+
+/* three sections: Study · Job search · Schedule */
+.home-sec { padding: 22px 0; border-top: 1px solid var(--line); }
+.home-sec:first-child { border-top: none; padding-top: 4px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.sec-title { font-size: 15px; font-weight: 800; letter-spacing: -0.2px; }
+.sec-note { font-size: 12px; color: var(--muted); font-weight: 600; text-align: right; }
+
+.home-schedule > summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; }
 .home-schedule > summary::-webkit-details-marker { display: none; }
-.home-schedule > summary::after { content: " ⌄"; color: var(--faint); }
-.home-schedule[open] > summary::after { content: " ⌃"; }
+.home-schedule > summary::after { content: "⌄"; color: var(--faint); font-size: 18px; }
+.home-schedule[open] > summary::after { content: "⌃"; }
+
+/* job-search log rows */
+.jobrow { margin-bottom: 18px; }
+.jobrow:last-child { margin-bottom: 0; }
+.jobrow-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.jobrow-label { flex: 1; font-size: 14px; font-weight: 600; }
+.jobrow-count { font-size: 13px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stepper { display: flex; gap: 6px; }
+.jobbtn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--panel); color: var(--text); font-size: 17px; font-weight: 700; cursor: pointer; display: grid; place-items: center; line-height: 1; }
+.jobbtn:hover { border-color: var(--accent); background: var(--accent-soft); }
 
 /* ---------- buttons ---------- */
 .btn {
