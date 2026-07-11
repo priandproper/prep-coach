@@ -8,10 +8,10 @@ export const SQL_PLAN = {
   goal: 'Interview-ready at SQL',
   startDate: null,
   horizonDays: 10,
-  contentVersion: 2,
+  contentVersion: 3,
   topics: [
     {
-      id: 't1', title: 'Foundations & setup', estHours: 3.5, priority: 1, load: 'low',
+      id: 't1', title: 'Get querying', estHours: 3.5, priority: 1, load: 'low',
       resourceRefs: ['sqlbolt', 'mode', 'dbfiddle'],
       summary: 'SELECT, WHERE, ORDER BY, LIMIT, DISTINCT — and a database to practice on all week.',
       checklist: [
@@ -22,7 +22,7 @@ export const SQL_PLAN = {
       ],
     },
     {
-      id: 't2', title: 'Filtering & NULLs', estHours: 4, priority: 1, load: 'medium',
+      id: 't2', title: 'Filter with precision', estHours: 4, priority: 1, load: 'medium',
       resourceRefs: ['sqlbolt', 'datalemur', 'mode'],
       summary: 'IN / BETWEEN / LIKE, NULL handling, string and date functions.',
       checklist: [
@@ -34,7 +34,7 @@ export const SQL_PLAN = {
       ],
     },
     {
-      id: 't3', title: 'Aggregation', estHours: 4, priority: 1, load: 'medium',
+      id: 't3', title: 'Crunch the numbers', estHours: 4, priority: 1, load: 'medium',
       resourceRefs: ['datalemur', 'mode', 'hackerrank'],
       summary: 'GROUP BY, HAVING, aggregates, and conditional aggregation with CASE.',
       checklist: [
@@ -46,7 +46,7 @@ export const SQL_PLAN = {
       ],
     },
     {
-      id: 't4', title: 'Joins', estHours: 4.5, priority: 1, load: 'high',
+      id: 't4', title: 'Master the join', estHours: 4.5, priority: 1, load: 'high',
       resourceRefs: ['mode', 'pgexercises', 'datalemur'],
       summary: 'INNER / LEFT / RIGHT / FULL, self & anti-joins, and fan-out traps.',
       checklist: [
@@ -58,7 +58,7 @@ export const SQL_PLAN = {
       ],
     },
     {
-      id: 't5', title: 'Subqueries & CTEs', estHours: 4, priority: 1, load: 'high',
+      id: 't5', title: 'Break it into CTEs', estHours: 4, priority: 1, load: 'high',
       resourceRefs: ['mode', 'datalemur', 'stratascratch'],
       summary: 'Correlated subqueries, chained CTEs, and recursive CTEs.',
       checklist: [
@@ -70,7 +70,7 @@ export const SQL_PLAN = {
       ],
     },
     {
-      id: 't6', title: 'Window functions I', estHours: 4, priority: 1, load: 'high',
+      id: 't6', title: 'Rank & dedupe', estHours: 4, priority: 1, load: 'high',
       resourceRefs: ['windowGuide', 'datalemur', 'leetcode'],
       summary: 'ROW_NUMBER, RANK, DENSE_RANK, PARTITION BY — the top-tested topic.',
       checklist: [
@@ -82,7 +82,7 @@ export const SQL_PLAN = {
       ],
     },
     {
-      id: 't7', title: 'Window functions II', estHours: 4, priority: 1, load: 'high',
+      id: 't7', title: 'Track trends over time', estHours: 4, priority: 1, load: 'high',
       resourceRefs: ['windowGuide', 'stratascratch', 'leetcode'],
       summary: 'LAG / LEAD, running totals, moving averages, period-over-period.',
       checklist: [
@@ -94,7 +94,7 @@ export const SQL_PLAN = {
       ],
     },
     {
-      id: 't8', title: 'Analytics patterns', estHours: 4, priority: 2, load: 'high',
+      id: 't8', title: 'Build funnels & cohorts', estHours: 4, priority: 2, load: 'high',
       resourceRefs: ['stratascratch', 'datalemur', 'mode'],
       summary: 'Funnels, cohort/retention, date bucketing — the scenario shapes.',
       checklist: [
@@ -106,7 +106,7 @@ export const SQL_PLAN = {
       ],
     },
     {
-      id: 't9', title: 'Dialects & performance', estHours: 3.5, priority: 2, load: 'medium',
+      id: 't9', title: 'Speak every dialect', estHours: 3.5, priority: 2, load: 'medium',
       resourceRefs: ['snowflakeqUALIFY', 'mode'],
       summary: 'Snowflake / Oracle / SQL Server differences, plus indexing basics.',
       checklist: [
@@ -118,7 +118,7 @@ export const SQL_PLAN = {
       ],
     },
     {
-      id: 't10', title: 'Timed mock', estHours: 3, priority: 1, load: 'high',
+      id: 't10', title: 'Prove it — timed mock', estHours: 3, priority: 1, load: 'high',
       resourceRefs: ['datalemur', 'stratascratch', 'leetcode'],
       summary: '5 problems in 45 minutes, then review your weak spots.',
       checklist: [
