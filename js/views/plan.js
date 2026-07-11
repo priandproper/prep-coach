@@ -85,6 +85,7 @@ function planControls(plan) {
         h('input', { type: 'number', min: 1, max: 14, value: plan.horizonDays, onchange: e => { plan.horizonDays = clamp(+e.target.value, 1, 14); store.save(); } })]),
     ]),
     h('div.btn-row', {}, [
+      h('button.btn.sm', { onclick: () => { plan.startDate = store.todayISO(); store.save(); toast('Day 1 is today. 🌱'); } }, '▶ Start today (Day 1 = today)'),
       h('button.btn.ghost.sm', { onclick: () => modal({ title: 'Reset to the 10-day SQL plan?', body: 'This replaces your current topics with the preloaded curriculum and sets the start date to today. Progress is kept.', confirmText: 'Reset plan', danger: true, onConfirm: () => { store.loadSamplePlan(); toast('Preloaded SQL plan restored.'); } }) }, '↺ Reset to preloaded SQL plan'),
     ]),
   ]);
