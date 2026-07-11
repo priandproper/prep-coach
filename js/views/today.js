@@ -13,6 +13,7 @@ let audioCtx = null;          // unlocked on first Start; drives the chime
 let lastBase = 'idle';        // last pomodoro phase base, to chime only on real transitions
 let focusOverlay = null;      // the full-screen focus-mode element
 let focusSeconds = 0;         // accumulated focused (work-phase) seconds this session
+let heroTaskIdx = null;       // which task is showing in the center dial
 
 // ---- task derivation ----
 export function tasksForDay(iso, sched, plan) {
@@ -86,17 +87,16 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
   const topic = day && day.topics.length ? day.topics[0].title : 'Lighter day';
   const firstUndone = tasks.findIndex(t => !done.has(t.id));
 
+  if (heroTaskIdx == null || heroTaskIdx < 0 || heroTaskIdx >= total) heroTaskIdx = Math.max(0, firstUndone);
+
   return h('div.home', {}, [
     streak > 0 ? h('div.home-streakbar', {}, h('span.home-streak', {}, `🔥 ${streak} day${streak > 1 ? 's' : ''}`)) : null,
     h('div.home-hero', {}, [
-      homeRing(pct, doneCount, total, allDone),
-      h('div.home-eyebrow', {}, `DAY ${dayIdx + 1} · ${plan.horizonDays}-DAY SPRINT`),
-      h('h1.home-topic', {}, topic),
+      h('div.home-eyebrow', {}, `DAY ${dayIdx + 1} · ${topic.toUpperCase()}`),
+      total ? taskDial(iso, tasks, done, doneCount) : h('p.home-empty', {}, 'Nothing scheduled today — rest up.'),
+      total ? dotsRow(iso, tasks, done) : null,
       h('button.btn.primary.focus-start', { onclick: () => { unlockAudio(); openFocusMode(config); } }, 'Start focus →'),
     ]),
-    total
-      ? h('div.home-tasks', {}, tasks.map((t, i) => taskRow(iso, t, done.has(t.id), i === firstUndone)))
-      : h('p.home-empty', {}, 'Nothing scheduled today — rest up.'),
     blocks && blocks.length ? h('details.home-schedule', {}, [
       h('summary', {}, 'Schedule'),
       h('div.timeline', { style: 'margin-top:10px' }, blocks.map(b => h('div.tl-row', {}, [
@@ -108,21 +108,52 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
   ]);
 }
 
-function homeRing(pct, doneCount, total, allDone) {
-  const R = 66, C = 2 * Math.PI * R;
-  const off = C * (1 - (total ? pct / 100 : 0));
-  const ring = h('div.home-ring', {
+function rerenderHome() { const root = document.getElementById('view'); if (root) render(root); }
+
+// A short "what kind of task" label — the couple of words describing it.
+function taskKind(title) {
+  const w = (title || '').trim().toLowerCase();
+  if (w.startsWith('set up') || w.startsWith('setup')) return 'SET UP';
+  if (w.startsWith('do ') || w.startsWith('read')) return 'LEARN';
+  if (w.startsWith('write') || w.startsWith('build')) return 'BUILD';
+  if (w.startsWith('practice') || w.startsWith('solve') || w.startsWith('diagram') || w.startsWith('join') || w.startsWith('dedup')) return 'DRILL';
+  if (w.startsWith('note') || w.startsWith('score') || w.startsWith('re-solve') || w.startsWith('review')) return 'REVIEW';
+  return 'PRACTICE';
+}
+
+// Centerpiece: one task in a ring you can flip through and tap to complete.
+function taskDial(iso, tasks, done, doneCount) {
+  const total = tasks.length;
+  const t = tasks[heroTaskIdx];
+  const isDone = t && done.has(t.id);
+  const pct = total ? (doneCount / total) * 100 : 0;
+  const R = 76, C = 2 * Math.PI * R, off = C * (1 - pct / 100);
+  const ring = h('div', {
+    class: 'task-dial' + (isDone ? ' done' : ''),
     html:
-      '<svg viewBox="0 0 160 160" aria-hidden="true">' +
-      '<circle class="hr-track" cx="80" cy="80" r="' + R + '"/>' +
-      '<circle class="hr-prog" cx="80" cy="80" r="' + R + '" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '"/>' +
+      '<svg viewBox="0 0 180 180" aria-hidden="true">' +
+      '<circle class="td-track" cx="90" cy="90" r="' + R + '"/>' +
+      '<circle class="td-prog" cx="90" cy="90" r="' + R + '" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '"/>' +
       '</svg>',
   });
-  ring.appendChild(h('div.home-ring-center', {}, [
-    h('div.hr-count', {}, total ? `${doneCount}/${total}` : '0'),
-    h('div.hr-label', {}, total ? (allDone ? 'DONE ✓' : 'TASKS') : 'REST DAY'),
+  ring.appendChild(h('div.td-center', { onclick: () => t && toggleTask(iso, t.id, !isDone) }, [
+    h('div.td-kind', {}, taskKind(t.title)),
+    h('div.td-title', {}, t.title),
+    h('div.td-action', {}, isDone ? '✓ done' : 'tap to complete'),
   ]));
-  return ring;
+  return h('div.td-wrap', {}, [
+    h('button.td-nav', { 'aria-label': 'Previous task', onclick: () => { heroTaskIdx = (heroTaskIdx - 1 + total) % total; rerenderHome(); } }, '‹'),
+    ring,
+    h('button.td-nav', { 'aria-label': 'Next task', onclick: () => { heroTaskIdx = (heroTaskIdx + 1) % total; rerenderHome(); } }, '›'),
+  ]);
+}
+
+function dotsRow(iso, tasks, done) {
+  return h('div.td-dots', {}, tasks.map((t, i) => h('button', {
+    class: 'td-dot' + (done.has(t.id) ? ' done' : '') + (i === heroTaskIdx ? ' active' : ''),
+    'aria-label': 'Task ' + (i + 1),
+    onclick: () => { heroTaskIdx = i; rerenderHome(); },
+  })));
 }
 
 function taskRow(iso, t, isDone, isNext) {
