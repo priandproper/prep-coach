@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>10-Day SQL Bootcamp · prep-coach</title>
+<style>
+  :root{
+    --bg:#f4f1ea; --panel:#fbfaf6; --soft:#eee9df; --line:#e4dfd3; --line2:#d6d0c2;
+    --text:#201e1a; --muted:#6d685f; --faint:#a39e93;
+    --accent:#2f5d3f; --accent-strong:#244a32; --accent-soft:#e4ece5; --ink:#f6f3ec;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.62;font-size:16px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:34px 22px 100px}
+  header.top{display:flex;align-items:center;gap:11px;margin-bottom:6px}
+  .logo{width:30px;height:30px;border-radius:9px;background:var(--accent);color:var(--ink);display:grid;place-items:center;font-size:16px}
+  .brand{font-weight:800}
+  h1{font-size:34px;letter-spacing:-.8px;margin:16px 0 6px;line-height:1.1}
+  .lede{color:var(--muted);font-size:17px;margin:0 0 8px}
+  .meta{color:var(--faint);font-size:13px;margin-bottom:20px}
+
+  /* sticky day nav */
+  .daynav{position:sticky;top:0;z-index:5;background:rgba(244,241,234,.9);backdrop-filter:blur(8px);
+    display:flex;gap:6px;flex-wrap:wrap;padding:12px 0;margin:0 0 8px;border-bottom:1px solid var(--line)}
+  .daynav a{font-size:12.5px;font-weight:700;color:var(--muted);text-decoration:none;border:1px solid var(--line2);
+    background:var(--panel);border-radius:999px;padding:5px 11px}
+  .daynav a:hover{border-color:var(--accent);color:var(--accent-strong)}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;margin:18px 0;box-shadow:0 3px 14px rgba(47,45,40,.05)}
+  h2{font-size:23px;letter-spacing:-.4px;margin:0}
+  h3{font-size:14px;text-transform:uppercase;letter-spacing:.8px;color:var(--accent-strong);margin:22px 0 8px}
+  h3:first-of-type{margin-top:16px}
+  p{margin:10px 0}
+  .day-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:14px}
+  .daynum{font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--ink);background:var(--accent);border-radius:8px;padding:4px 10px}
+  .focus{color:var(--muted);font-size:14.5px;margin:12px 0 0}
+  .est{font-size:12px;color:var(--faint);font-weight:600}
+  code{font-family:var(--mono);font-size:14px;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--accent-strong)}
+  pre{background:#211f1b;color:#f3ead9;border-radius:12px;padding:15px 17px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55}
+  pre .kw{color:#9ec7a0}.st{color:#e0a58a}.cm{color:#8a8676;font-style:italic}.fn{color:#e8c07d}
+  ul{margin:10px 0;padding-left:22px}li{margin:5px 0}
+  ul.do{list-style:none;padding-left:0}
+  ul.do li{padding:6px 0 6px 28px;position:relative}
+  ul.do li::before{content:"☐";position:absolute;left:2px;color:var(--accent);font-size:16px}
+  .links{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .links a{font-size:13px;font-weight:600;text-decoration:none;color:var(--accent-strong);background:var(--accent-soft);border:1px solid #cfe0d2;border-radius:999px;padding:6px 12px}
+  .links a:hover{border-color:var(--accent)}
+  .angle{border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;padding:11px 15px;margin-top:16px;font-size:14.5px}
+  .angle b{color:var(--accent-strong)}
+  .callout{border-left:3px solid #b0843a;background:#f6edda;border-radius:0 10px 10px 0;padding:12px 15px;margin:14px 0;font-size:14.5px}
+  a.tlink{color:var(--accent-strong);font-weight:600}
+  .divider{height:1px;background:var(--line);margin:26px 0}
+  footer{color:var(--faint);font-size:13px;border-top:1px solid var(--line);margin-top:36px;padding-top:16px}
+  @media (max-width:600px){ .wrap{padding:22px 15px 80px} h1{font-size:27px} h2{font-size:20px} pre{font-size:12.5px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><span class="logo">◎</span><span class="brand">prep-coach</span><span class="est" style="margin-left:auto">10-Day SQL Bootcamp</span></header>
+
+  <h1>10-Day SQL Bootcamp</h1>
+  <p class="lede">From shaky to <strong>interview-ready at the 1–2 year analytics bar</strong>. Ten focused days that get you writing joins, CTEs, and window functions by reflex — the exact toolkit technical screens test.</p>
+  <p class="meta">~3–4 hrs/day · practice-first · every concept links to where you'll drill it.</p>
+
+  <nav class="daynav">
+    <a href="#how">How it works</a>
+    <a href="#day1">Day 1</a><a href="#day2">Day 2</a><a href="#day3">Day 3</a><a href="#day4">Day 4</a>
+    <a href="#day5">Day 5</a><a href="#day6">Day 6</a><a href="#day7">Day 7</a><a href="#day8">Day 8</a>
+    <a href="#day9">Day 9</a><a href="#day10">Day 10</a><a href="#toolkit">Toolkit</a>
+  </nav>
+
+  <!-- HOW IT WORKS -->
+  <section id="how" class="card">
+    <h2>How the interview actually works</h2>
+    <p>Most analytics technical screens are <b>3–6 SQL questions in 30–60 minutes</b>, usually on a shared editor (CoderPad, HackerRank) or an async take-home with a messy dataset. There's almost always <b>one scenario problem</b> ("top performer per segment", "month-over-month growth"). The take-home case study is often the <em>deciding</em> round.</p>
+    <p><b>They don't just check "does it run."</b> They grade:</p>
+    <ul>
+      <li><b>Correctness under edge cases</b> — did you handle NULLs, duplicates, and ties?</li>
+      <li><b>Readability</b> — CTEs over deeply-nested subqueries; clear aliases.</li>
+      <li><b>Decomposition</b> — breaking a hard question into steps out loud.</li>
+      <li><b>Business sense</b> — asking clarifying questions ("does a lead count at 'demo' or 'won'?").</li>
+    </ul>
+    <div class="callout">💡 <b>Three habits to build from Day 1:</b> (1) narrate your logic out loud, (2) ask "what's the edge case — NULLs? dupes? ties?" before calling a query done, (3) write it clean the first time.</div>
+    <h3>Set this up once (Day 1)</h3>
+    <p>You need a database to run queries against all 10 days. Easiest: <a class="tlink" href="https://www.db-fiddle.com/" target="_blank" rel="noopener">DB Fiddle</a> (pick <b>PostgreSQL 15</b>, nothing to install). Keep a scratch tab open the whole bootcamp.</p>
+  </section>
+
+  <!-- DAY 1 -->
+  <section id="day1" class="card">
+    <div class="day-head"><span class="daynum">DAY 1</span><h2>Get querying — foundations</h2><span class="est">~3.5 hrs</span></div>
+    <p class="focus">SELECT · WHERE · ORDER BY · LIMIT · DISTINCT — and a working practice database.</p>
+
+    <h3>What you're learning</h3>
+    <p>Every query is <code>SELECT columns FROM table</code> plus optional clauses. The clauses are always written in this order — and it's worth knowing SQL <em>logically executes</em> them in a different order: <b>FROM → WHERE → GROUP BY → SELECT → ORDER BY → LIMIT</b>. That's why you can't use a column alias from <code>SELECT</code> inside <code>WHERE</code> (WHERE runs first).</p>
+    <p><code>WHERE</code> filters rows with comparisons (<code>=</code>, <code>&lt;&gt;</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>) combined with <code>AND</code>/<code>OR</code>/<code>NOT</code>. Text goes in <b>single quotes</b>. <code>ORDER BY col DESC</code> sorts; <code>LIMIT n</code> caps rows (together they give "top N"). <code>DISTINCT</code> collapses duplicate rows.</p>
+
+    <h3>Key syntax</h3>
+    <pre><span class="cm">-- top 5 highest-budget Paid Search campaigns</span>
+<span class="kw">SELECT</span> name, budget
+<span class="kw">FROM</span>   campaigns
+<span class="kw">WHERE</span>  channel = <span class="st">'Paid Search'</span> <span class="kw">AND</span> budget &gt; 5000
+<span class="kw">ORDER BY</span> budget <span class="kw">DESC</span>
+<span class="kw">LIMIT</span>  5;
+
+<span class="cm">-- the distinct set of channels you run</span>
+<span class="kw">SELECT DISTINCT</span> channel <span class="kw">FROM</span> campaigns;</pre>
+
+    <h3>Practice here</h3>
+    <div class="links">
+      <a href="https://www.db-fiddle.com/" target="_blank" rel="noopener">DB Fiddle (set up DB)</a>
+      <a href="https://sqlbolt.com/" target="_blank" rel="noopener">SQLBolt 1–6</a>
+      <a href="https://mode.com/sql-tutorial/introduction-to-sql/" target="_blank" rel="noopener">Mode: Basic SQL</a>
+      <a href="https://datalemur.com/questions?category=SQL" target="_blank" rel="noopener">DataLemur (Easy)</a>
+    </div>
+
+    <h3>Do today</h3>
+    <ul class="do">
+      <li>Stand up a practice DB in DB Fiddle with a small sales/marketing dataset</li>
+      <li>Work SQLBolt lessons 1–6</li>
+      <li>Write 10 queries using SELECT / WHERE / ORDER BY / LIMIT / DISTINCT</li>
+      <li>Solve 4 DataLemur "Easy" questions</li>
+    </ul>
+    <div class="angle"><b>Interview angle:</b> This is the warm-up they assume you can do instantly. Speed and clean aliasing here buy you credibility for the hard questions later.</div>
+  </section>
+
+  <!-- DAY 2 -->
+  <section id="day2" class="card">
+    <div class="day-head"><span class="daynum">DAY 2</span><h2>Filter with precision — NULLs, strings, dates</h2><span class="est">~4 hrs</span></div>
+    <p class="focus">IN · BETWEEN · LIKE · NULL handling · string &amp; date functions.</p>
+
+    <h3>What you're learning</h3>
+    <p><code>IN ('US','UK')</code> beats a chain of ORs; <code>BETWEEN a AND b</code> is inclusive; <code>LIKE '%Q3%'</code> pattern-matches (<code>%</code> = any characters, <code>_</code> = one). The big one: <b>NULL is "unknown", and comparisons to it return unknown, not true.</b> So <code>WHERE col = NULL</code> silently matches nothing — you must use <code>IS NULL</code> / <code>IS NOT NULL</code>. <code>COALESCE(a, b, 0)</code> returns the first non-null; <code>NULLIF(a,b)</code> returns NULL when equal (handy to dodge divide-by-zero).</p>
+    <p>String tools: <code>CONCAT</code>, <code>SUBSTRING</code>, <code>TRIM</code>, <code>UPPER/LOWER</code>, <code>REPLACE</code>. Date tools: <code>EXTRACT(YEAR FROM d)</code>, <code>DATE_TRUNC('month', d)</code>, and date math.</p>
+
+    <h3>Key syntax</h3>
+    <pre><span class="cm">-- leads missing a company size (a real data-quality check)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> leads <span class="kw">WHERE</span> company_size <span class="kw">IS NULL</span>;
+
+<span class="cm">-- safe division with NULLIF, default with COALESCE</span>
+<span class="kw">SELECT</span> <span class="fn">COALESCE</span>(revenue, 0) / <span class="fn">NULLIF</span>(orders, 0) <span class="kw">AS</span> avg_order_value
+<span class="kw">FROM</span> accounts;</pre>
+    <div class="callout">⚠️ <code>= NULL</code> never works, and <code>&lt;&gt;</code> excludes NULLs too. If you want "not 'won', including unknowns," you need <code>status &lt;&gt; 'won' OR status IS NULL</code>. Interviewers plant this.</div>
+
+    <h3>Practice here</h3>
+    <div class="links">
+      <a href="https://sqlbolt.com/lesson/select_queries_with_expressions" target="_blank" rel="noopener">SQLBolt: expressions</a>
+      <a href="https://pgexercises.com/questions/basic/" target="_blank" rel="noopener">PG Exercises: Basic</a>
+      <a href="https://datalemur.com/questions?category=SQL" target="_blank" rel="noopener">DataLemur (Easy)</a>
+    </div>
+
+    <h3>Do today</h3>
+    <ul class="do">
+      <li>Drill IN / BETWEEN / LIKE on your dataset</li>
+      <li>Master NULLs: IS NULL, COALESCE, NULLIF (and why <code>= NULL</code> fails)</li>
+      <li>Use 4 string functions and 3 date functions in real queries</li>
+      <li>Solve 6 easy questions</li>
+    </ul>
+    <div class="angle"><b>Interview angle:</b> NULL handling is the #1 source of "looks right, is wrong" answers. Get this reflex now and you'll dodge the trap everyone else hits.</div>
+  </section>
+
+  <!-- DAY 3 -->
+  <section id="day3" class="card">
+    <div class="day-head"><span class="daynum">DAY 3</span><h2>Crunch the numbers — aggregation</h2><span class="est">~4 hrs</span></div>
+    <p class="focus">GROUP BY · HAVING · COUNT/SUM/AVG · conditional aggregation.</p>
+
+    <h3>What you're learning</h3>
+    <p><code>GROUP BY</code> collapses rows into one per group; aggregate functions (<code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code>) summarize each group. Rule: every non-aggregated column in <code>SELECT</code> must be in <code>GROUP BY</code>. <code>COUNT(*)</code> counts rows; <code>COUNT(col)</code> ignores NULLs; <code>COUNT(DISTINCT col)</code> counts unique values.</p>
+    <p><b>WHERE vs HAVING:</b> <code>WHERE</code> filters <em>rows before</em> grouping; <code>HAVING</code> filters <em>groups after</em>. The power move is <b>conditional aggregation</b> — <code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code> — to pivot categories into columns in one pass.</p>
+
+    <h3>Key syntax</h3>
+    <pre><span class="cm">-- leads and conversion per channel, in one pass</span>
+<span class="kw">SELECT</span> c.channel,
+       <span class="fn">COUNT</span>(*)                                          <span class="kw">AS</span> leads,
+       <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> l.status = <span class="st">'won'</span> <span class="kw">THEN</span> 1 <span class="kw">ELSE</span> 0 <span class="kw">END</span>) <span class="kw">AS</span> won,
+       <span class="fn">ROUND</span>(100.0 * <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> l.status=<span class="st">'won'</span> <span class="kw">THEN</span> 1 <span class="kw">ELSE</span> 0 <span class="kw">END</span>) / <span class="fn">COUNT</span>(*), 1) <span class="kw">AS</span> win_pct
+<span class="kw">FROM</span> leads l <span class="kw">JOIN</span> campaigns c <span class="kw">ON</span> c.campaign_id = l.campaign_id
+<span class="kw">GROUP BY</span> c.channel
+<span class="kw">HAVING</span> <span class="fn">COUNT</span>(*) &gt;= 5
+<span class="kw">ORDER BY</span> win_pct <span class="kw">DESC</span>;</pre>
+
+    <h3>Practice here</h3>
+    <div class="links">
+      <a href="https://mode.com/sql-tutorial/sql-aggregate-functions/" target="_blank" rel="noopener">Mode: Aggregations</a>
+      <a href="https://www.hackerrank.com/domains/sql?filters%5Bsubdomains%5D%5B%5D=aggregation" target="_blank" rel="noopener">HackerRank: Aggregation</a>
+      <a href="https://datalemur.com/questions?category=SQL" target="_blank" rel="noopener">DataLemur</a>
+    </div>
+
+    <h3>Do today</h3>
+    <ul class="do">
+      <li>GROUP BY with COUNT / SUM / AVG / MIN / MAX</li>
+      <li>Contrast WHERE vs HAVING on the same query</li>
+      <li>Write a conditional-aggregation "metrics per segment" query</li>
+      <li>Solve 6 aggregation questions</li>
+    </ul>
+    <div class="angle"><b>Interview angle:</b> "Give me metric X per group Y" is the most common analytics question type. Conditional aggregation is the move that makes you look senior.</div>
+  </section>
+
+  <!-- DAY 4 -->
+  <section id="day4" class="card">
+    <div class="day-head"><span class="daynum">DAY 4</span><h2>Master the join</h2><span class="est">~4.5 hrs</span></div>
+    <p class="focus">INNER / LEFT / RIGHT / FULL · self &amp; anti-joins · the fan-out trap.</p>
+
+    <h3>What you're learning</h3>
+    <p><code>INNER JOIN</code> keeps only matches; <code>LEFT JOIN</code> keeps all left rows (NULLs where no match) — this is what you want for "all customers, even those with zero orders". A <b>self-join</b> joins a table to itself (employee → manager). An <b>anti-join</b> finds rows with <em>no</em> match: <code>LEFT JOIN ... WHERE right.id IS NULL</code> (or <code>NOT EXISTS</code>).</p>
+    <p>The trap they love: <b>fan-out</b>. If you join a table to another with multiple matching rows, the left rows <em>multiply</em>, and any <code>SUM</code> over them double-counts. Always ask "is this join one-to-one or one-to-many?" Aggregate to the right grain first, or use <code>COUNT(DISTINCT)</code>.</p>
+
+    <h3>Key syntax</h3>
+    <pre><span class="cm">-- campaigns that produced ZERO leads (anti-join)</span>
+<span class="kw">SELECT</span> c.name
+<span class="kw">FROM</span> campaigns c
+<span class="kw">LEFT JOIN</span> leads l <span class="kw">ON</span> l.campaign_id = c.campaign_id
+<span class="kw">WHERE</span> l.lead_id <span class="kw">IS NULL</span>;</pre>
+    <div class="callout">⚠️ Put match conditions in <code>ON</code>, filters in <code>WHERE</code> — but note: a filter on the <em>right</em> table's column in <code>WHERE</code> quietly turns a LEFT JOIN back into an INNER JOIN. Keep those conditions in the <code>ON</code> clause.</div>
+
+    <h3>Practice here</h3>
+    <div class="links">
+      <a href="https://sqlbolt.com/lesson/select_queries_with_joins" target="_blank" rel="noopener">SQLBolt: Joins</a>
+      <a href="https://pgexercises.com/questions/joins/" target="_blank" rel="noopener">PG Exercises: Joins</a>
+      <a href="https://mode.com/sql-tutorial/sql-joins/" target="_blank" rel="noopener">Mode: Joins</a>
+    </div>
+
+    <h3>Do today</h3>
+    <ul class="do">
+      <li>Diagram INNER vs LEFT vs RIGHT vs FULL on a tiny example</li>
+      <li>Write a self-join and an anti-join</li>
+      <li>Join 3+ tables; deliberately create a fan-out bug, then fix it</li>
+      <li>Solve 6 join questions</li>
+    </ul>
+    <div class="angle"><b>Interview angle:</b> Joins + fan-out is the single most common place candidates ship wrong numbers. If you can explain fan-out out loud, you're ahead of most 1–2 yr candidates.</div>
+  </section>
+
+  <!-- DAY 5 -->
+  <section id="day5" class="card">
+    <div class="day-head"><span class="daynum">DAY 5</span><h2>Break it into CTEs</h2><span class="est">~4 hrs</span></div>
+    <p class="focus">Subqueries · CTEs · chaining · recursive CTEs.</p>
+
+    <h3>What you're learning</h3>
+    <p>A subquery is a query inside a query. <b>Correlated</b> subqueries reference the outer row (run per-row, e.g. "leads above their channel's average"); <b>uncorrelated</b> ones run once. <b>CTEs</b> (<code>WITH name AS (...)</code>) name a subquery so you can chain readable steps instead of nesting. <b>Recursive CTEs</b> walk hierarchies (org charts, category trees).</p>
+    <p>The interview lesson: <b>reach for CTEs to make hard queries legible.</b> A three-step CTE that a reviewer can follow beats a clever nested one-liner.</p>
+
+    <h3>Key syntax</h3>
+    <pre><span class="cm">-- chained CTEs: per-channel totals, then above-average channels</span>
+<span class="kw">WITH</span> per_channel <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> channel, <span class="fn">SUM</span>(budget) <span class="kw">AS</span> spend
+  <span class="kw">FROM</span> campaigns <span class="kw">GROUP BY</span> channel
+),
+avg_spend <span class="kw">AS</span> (<span class="kw">SELECT</span> <span class="fn">AVG</span>(spend) <span class="kw">AS</span> a <span class="kw">FROM</span> per_channel)
+<span class="kw">SELECT</span> p.channel, p.spend
+<span class="kw">FROM</span> per_channel p, avg_spend
+<span class="kw">WHERE</span> p.spend &gt; avg_spend.a;</pre>
+
+    <h3>Practice here</h3>
+    <div class="links">
+      <a href="https://mode.com/sql-tutorial/sql-sub-queries/" target="_blank" rel="noopener">Mode: Subqueries</a>
+      <a href="https://www.stratascratch.com/" target="_blank" rel="noopener">StrataScratch</a>
+      <a href="https://datalemur.com/questions?category=SQL" target="_blank" rel="noopener">DataLemur (Medium)</a>
+    </div>
+
+    <h3>Do today</h3>
+    <ul class="do">
+      <li>Rewrite a nested subquery as a chain of CTEs</li>
+      <li>Write one correlated subquery and one recursive CTE (walk a hierarchy)</li>
+      <li>Break one hard problem into 3 named CTE steps</li>
+      <li>Solve 5 CTE / subquery questions</li>
+    </ul>
+    <div class="angle"><b>Interview angle:</b> Readability is graded. Narrating "first I'll get X in a CTE, then join it to Y" signals structured thinking — exactly what they want.</div>
+  </section>
+
+  <!-- DAY 6 -->
+  <section id="day6" class="card">
+    <div class="day-head"><span class="daynum">DAY 6</span><h2>Rank &amp; dedupe — window functions I</h2><span class="est">~4 hrs</span></div>
+    <p class="focus">ROW_NUMBER · RANK · DENSE_RANK · PARTITION BY · dedup · top-N per group.</p>
+
+    <h3>What you're learning</h3>
+    <p>Window functions compute across a set of rows <em>without collapsing them</em> — the key difference from <code>GROUP BY</code>. Syntax: <code>func() OVER (PARTITION BY ... ORDER BY ...)</code>. <code>ROW_NUMBER</code> gives 1,2,3 with no ties; <code>RANK</code> leaves gaps after ties (1,1,3); <code>DENSE_RANK</code> doesn't (1,1,2). The classic uses: <b>dedup</b> (keep the latest row per key with <code>ROW_NUMBER … = 1</code>) and <b>top-N per group</b>.</p>
+
+    <h3>Key syntax</h3>
+    <pre><span class="cm">-- top 3 budget campaigns within each channel</span>
+<span class="kw">WITH</span> ranked <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> channel, name, budget,
+         <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> channel <span class="kw">ORDER BY</span> budget <span class="kw">DESC</span>) <span class="kw">AS</span> rn
+  <span class="kw">FROM</span> campaigns
+)
+<span class="kw">SELECT</span> channel, name, budget <span class="kw">FROM</span> ranked <span class="kw">WHERE</span> rn &lt;= 3;</pre>
+
+    <h3>Practice here</h3>
+    <div class="links">
+      <a href="https://mode.com/sql-tutorial/sql-window-functions/" target="_blank" rel="noopener">Mode: Window Functions</a>
+      <a href="https://leetcode.com/studyplan/top-sql-50/" target="_blank" rel="noopener">LeetCode SQL 50</a>
+      <a href="https://datalemur.com/questions?category=SQL" target="_blank" rel="noopener">DataLemur (Window)</a>
+    </div>
+
+    <h3>Do today</h3>
+    <ul class="do">
+      <li>Explain PARTITION BY vs GROUP BY (rows kept vs collapsed)</li>
+      <li>Show the difference between ROW_NUMBER / RANK / DENSE_RANK on ties</li>
+      <li>Dedup rows keeping the latest per key; do top-N per group</li>
+      <li>Solve 6 window-function questions</li>
+    </ul>
+    <div class="angle"><b>Interview angle:</b> Window functions are <em>the</em> most-tested advanced topic and the clearest signal you're above entry level. Most junior candidates stop at joins — don't.</div>
+  </section>
+
+  <!-- DAY 7 -->
+  <section id="day7" class="card">
+    <div class="day-head"><span class="daynum">DAY 7</span><h2>Track trends over time — window functions II</h2><span class="est">~4 hrs</span></div>
+    <p class="focus">LAG / LEAD · running totals · moving averages · frames · period-over-period.</p>
+
+    <h3>What you're learning</h3>
+    <p><code>LAG(x)</code> / <code>LEAD(x)</code> pull the previous/next row's value — perfect for month-over-month change. Running totals and moving averages use the <b>frame clause</b>: <code>SUM(x) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)</code> for a running total; <code>ROWS BETWEEN 6 PRECEDING AND CURRENT ROW</code> for a 7-row moving average. Growth % = <code>(x - LAG(x)) / LAG(x)</code>.</p>
+
+    <h3>Key syntax</h3>
+    <pre><span class="cm">-- month-over-month revenue growth</span>
+<span class="kw">WITH</span> m <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> <span class="fn">DATE_TRUNC</span>(<span class="st">'month'</span>, order_date) <span class="kw">AS</span> mth, <span class="fn">SUM</span>(amount) <span class="kw">AS</span> rev
+  <span class="kw">FROM</span> orders <span class="kw">GROUP BY</span> 1
+)
+<span class="kw">SELECT</span> mth, rev,
+       rev - <span class="fn">LAG</span>(rev) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> mth) <span class="kw">AS</span> mom_change,
+       <span class="fn">ROUND</span>(100.0 * (rev - <span class="fn">LAG</span>(rev) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> mth))
+             / <span class="fn">NULLIF</span>(<span class="fn">LAG</span>(rev) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> mth), 0), 1) <span class="kw">AS</span> mom_pct
+<span class="kw">FROM</span> m <span class="kw">ORDER BY</span> mth;</pre>
+
+    <h3>Practice here</h3>
+    <div class="links">
+      <a href="https://mode.com/sql-tutorial/sql-window-functions/" target="_blank" rel="noopener">Mode: Window Functions</a>
+      <a href="https://www.stratascratch.com/" target="_blank" rel="noopener">StrataScratch</a>
+      <a href="https://leetcode.com/studyplan/top-sql-50/" target="_blank" rel="noopener">LeetCode SQL 50</a>
+    </div>
+
+    <h3>Do today</h3>
+    <ul class="do">
+      <li>LAG / LEAD for month-over-month change</li>
+      <li>Running total + a moving average with a frame clause</li>
+      <li>Compute % growth vs previous period (guard the divide with NULLIF)</li>
+      <li>Solve 6 offset / frame questions; explain one aloud</li>
+    </ul>
+    <div class="angle"><b>Interview angle:</b> "Show the trend / growth over time" is a favorite scenario. Frames trip people up — practice <code>ROWS BETWEEN</code> until it's automatic.</div>
+  </section>
+
+  <!-- DAY 8 -->
+  <section id="day8" class="card">
+    <div class="day-head"><span class="daynum">DAY 8</span><h2>Build funnels &amp; cohorts — analytics patterns</h2><span class="est">~4 hrs</span></div>
+    <p class="focus">Funnels · cohort/retention · date bucketing · A/B comparison.</p>
+
+    <h3>What you're learning</h3>
+    <p>These are the <b>scenario shapes</b> real analytics interviews and take-homes use, built by <em>combining</em> what you've learned. A <b>funnel</b> counts distinct users reaching each step (visit → signup → activate → pay). <b>Cohort retention</b> groups users by signup month, then measures how many are active N months later. <b>Date bucketing</b> with <code>DATE_TRUNC</code> rolls events into day/week/month. An <b>A/B comparison</b> is a metric grouped by variant.</p>
+
+    <h3>Key syntax</h3>
+    <pre><span class="cm">-- a simple funnel with conditional aggregation</span>
+<span class="kw">SELECT</span>
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> lead_id)                                        <span class="kw">AS</span> leads,
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT CASE WHEN</span> event=<span class="st">'demo_booked'</span> <span class="kw">THEN</span> lead_id <span class="kw">END</span>) <span class="kw">AS</span> demos,
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT CASE WHEN</span> status=<span class="st">'won'</span>       <span class="kw">THEN</span> lead_id <span class="kw">END</span>) <span class="kw">AS</span> won
+<span class="kw">FROM</span> lead_events;</pre>
+
+    <h3>Practice here</h3>
+    <div class="links">
+      <a href="https://www.stratascratch.com/" target="_blank" rel="noopener">StrataScratch (scenarios)</a>
+      <a href="https://datalemur.com/questions?category=SQL" target="_blank" rel="noopener">DataLemur (Medium/Hard)</a>
+      <a href="https://mystery.knightlab.com/" target="_blank" rel="noopener">SQL Murder Mystery (fun)</a>
+    </div>
+
+    <h3>Do today</h3>
+    <ul class="do">
+      <li>Build a conversion funnel across multiple steps</li>
+      <li>Do a simple cohort-retention query (signups by month, active later)</li>
+      <li>Bucket events by month with DATE_TRUNC</li>
+      <li>Solve 4 medium/hard scenario questions on StrataScratch</li>
+    </ul>
+    <div class="angle"><b>Interview angle:</b> The take-home case study — a messy dataset + "find the insight" — is often the deciding round. Your marketing/GTM instinct is a real edge here: pair clean SQL with a clear, caveated conclusion.</div>
+  </section>
+
+  <!-- DAY 9 -->
+  <section id="day9" class="card">
+    <div class="day-head"><span class="daynum">DAY 9</span><h2>Speak every dialect + performance</h2><span class="est">~3.5 hrs</span></div>
+    <p class="focus">Snowflake / Oracle / SQL Server differences · indexing · EXPLAIN.</p>
+
+    <h3>What you're learning</h3>
+    <p>The <em>logic</em> is identical across platforms; only spellings differ. Row limiting: <code>LIMIT n</code> (Postgres/Snowflake/MySQL), <code>SELECT TOP n</code> (SQL Server), <code>FETCH FIRST n ROWS ONLY</code> (Oracle). Snowflake's <code>QUALIFY</code> filters window results without a subquery. Dates differ too (<code>DATEADD</code> vs <code>DATE_ADD</code> vs interval math). On <b>performance</b>: an index is a lookup structure that avoids full scans; <code>EXPLAIN</code> shows the plan; filter early, avoid <code>SELECT *</code>, and keep filters "sargable" (don't wrap the indexed column in a function).</p>
+
+    <h3>Key syntax</h3>
+    <pre><span class="cm">-- "latest row per key" — Snowflake QUALIFY (no subquery)</span>
+<span class="kw">SELECT</span> *
+<span class="kw">FROM</span> events
+<span class="kw">QUALIFY</span> <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> user_id <span class="kw">ORDER BY</span> ts <span class="kw">DESC</span>) = 1;</pre>
+
+    <h3>Practice here</h3>
+    <div class="links">
+      <a href="https://docs.snowflake.com/en/sql-reference/constructs/qualify" target="_blank" rel="noopener">Snowflake: QUALIFY</a>
+      <a href="https://use-the-index-luke.com/" target="_blank" rel="noopener">Use The Index, Luke (indexing)</a>
+      <a href="https://mode.com/sql-tutorial/sql-performance-tuning/" target="_blank" rel="noopener">Mode: Performance</a>
+    </div>
+
+    <h3>Do today</h3>
+    <ul class="do">
+      <li>Write the same "top N" query 3 ways: LIMIT / TOP / FETCH FIRST</li>
+      <li>Rewrite a windowed dedup using Snowflake QUALIFY</li>
+      <li>Read one EXPLAIN plan; note what an index does and when it helps</li>
+      <li>List the date-function differences you'll be asked about</li>
+    </ul>
+    <div class="angle"><b>Interview angle:</b> For marketing/growth analyst roles the warehouse is often BigQuery/Snowflake — don't over-index on Oracle. Knowing "the logic is the same, syntax differs" and being able to reason about a slow query is plenty.</div>
+  </section>
+
+  <!-- DAY 10 -->
+  <section id="day10" class="card">
+    <div class="day-head"><span class="daynum">DAY 10</span><h2>Prove it — timed mock</h2><span class="est">~3 hrs</span></div>
+    <p class="focus">Simulate the real screen: 5 problems, 45 minutes, then review.</p>
+
+    <h3>What you're doing</h3>
+    <p>Today is assembly and speed. Set a 45-minute timer and solve <b>5 mixed problems cold</b> — no hints — as if it's the real screen. Talk through each out loud (practice narrating; silence reads as uncertainty). Then score yourself, re-solve everything you missed explaining each step, and write a one-page <b>cheat-sheet of your personal gotchas</b> (the NULL trap, fan-out, frame syntax, dialect spellings).</p>
+
+    <h3>Practice here</h3>
+    <div class="links">
+      <a href="https://datalemur.com/questions?category=SQL" target="_blank" rel="noopener">DataLemur (timed set)</a>
+      <a href="https://www.stratascratch.com/" target="_blank" rel="noopener">StrataScratch</a>
+      <a href="https://leetcode.com/studyplan/top-sql-50/" target="_blank" rel="noopener">LeetCode SQL 50</a>
+    </div>
+
+    <h3>Do today</h3>
+    <ul class="do">
+      <li>45-min timer: solve 5 mixed problems cold, out loud</li>
+      <li>Score yourself; list every concept you fumbled</li>
+      <li>Re-solve the misses, narrating each step</li>
+      <li>One hard window + CTE combo problem</li>
+      <li>Write your 1-page personal gotchas cheat-sheet</li>
+    </ul>
+    <div class="angle"><b>Interview angle:</b> This is the round itself. If you can do 5 mixed problems in 45 minutes while talking through your logic and edge cases, you're at the 1–2 year bar. 🎯</div>
+  </section>
+
+  <!-- TOOLKIT -->
+  <section id="toolkit" class="card">
+    <h2>Your toolkit &amp; links</h2>
+    <h3>Practice platforms</h3>
+    <div class="links">
+      <a href="https://datalemur.com/questions" target="_blank" rel="noopener">DataLemur</a>
+      <a href="https://www.stratascratch.com/" target="_blank" rel="noopener">StrataScratch</a>
+      <a href="https://leetcode.com/studyplan/top-sql-50/" target="_blank" rel="noopener">LeetCode SQL 50</a>
+      <a href="https://www.hackerrank.com/domains/sql" target="_blank" rel="noopener">HackerRank SQL</a>
+      <a href="https://pgexercises.com/" target="_blank" rel="noopener">PostgreSQL Exercises</a>
+      <a href="https://mystery.knightlab.com/" target="_blank" rel="noopener">SQL Murder Mystery</a>
+    </div>
+    <h3>Learn / reference</h3>
+    <div class="links">
+      <a href="https://sqlbolt.com/" target="_blank" rel="noopener">SQLBolt</a>
+      <a href="https://mode.com/sql-tutorial/" target="_blank" rel="noopener">Mode SQL Tutorial</a>
+      <a href="https://mode.com/sql-tutorial/sql-window-functions/" target="_blank" rel="noopener">Mode: Window Functions</a>
+      <a href="https://use-the-index-luke.com/" target="_blank" rel="noopener">Use The Index, Luke</a>
+    </div>
+    <h3>Run queries</h3>
+    <div class="links">
+      <a href="https://www.db-fiddle.com/" target="_blank" rel="noopener">DB Fiddle</a>
+      <a href="https://sqliteonline.com/" target="_blank" rel="noopener">SQLite Online</a>
+    </div>
+    <div class="divider"></div>
+    <p><b>The one-line summary of what interviewers want:</b> correct under edge cases (NULLs, dupes, ties), readable (CTEs, clear names), and explained out loud. Nail those across these 10 days and the technical round stops being scary.</p>
+  </section>
+
+  <footer>prep-coach · 10-Day SQL Bootcamp · targeted at the 1–2 year analytics interview bar. Keep this tab bookmarked and work top to bottom.</footer>
+</div>
+</body>
+</html>
