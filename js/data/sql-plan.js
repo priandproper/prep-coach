@@ -14,10 +14,10 @@ export const SQL_PLAN = {
       resourceRefs: ['sqlbolt', 'mode', 'dbfiddle'],
       summary: 'SELECT, WHERE, ORDER BY, LIMIT, DISTINCT — and stand up a database you can run queries against all week.',
       checklist: [
-        'Set up a practice DB (DB Fiddle or local SQLite) with a sample sales/marketing dataset',
-        'Work through SQLBolt lessons 1–6 (SELECT, filtering, ordering)',
-        'Write 10 queries: SELECT, WHERE, ORDER BY, LIMIT, DISTINCT',
-        'Note the 3 syntax quirks you hit for later dialect review',
+        'Set up your practice database',
+        'Do SQLBolt lessons 1–6',
+        'Write 10 SELECT / WHERE / ORDER BY queries',
+        'Note any syntax that tripped you up',
       ],
     },
     {

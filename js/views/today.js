@@ -73,17 +73,51 @@ export function render(root) {
   const allDone = tasks.length > 0 && doneCount === tasks.length;
   const blocks = layoutDay(plan, config, sched, iso);
 
-  mount(root, [
-    headerHero(plan, config, sched, iso, dayIdx, tasks, doneCount, allDone),
-    h('div.grid.grid-2', {}, [
-      h('div', {}, [
-        focusCard(config),
-        checklistCard(iso, tasks, done),
-      ]),
-      h('div', {}, [
-        jobMiniCard(config),
-        scheduleCard(iso, blocks),
-      ]),
+  mount(root, [homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allDone, blocks)]);
+}
+
+// Tight, minimal, action-first home: where you are · one primary action · tasks.
+function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allDone, blocks) {
+  ensurePomo(config);
+  const total = tasks.length;
+  const pct = total ? Math.round((doneCount / total) * 100) : 0;
+  const streak = computeStreak(plan, sched);
+  const day = sched.days.find(d => d.iso === iso);
+  const topic = day && day.topics.length ? day.topics[0].title : 'Lighter day';
+  const firstUndone = tasks.findIndex(t => !done.has(t.id));
+
+  return h('div.home', {}, [
+    h('div.home-top', {}, [
+      h('span.home-eyebrow', {}, `DAY ${dayIdx + 1} OF ${plan.horizonDays}`),
+      streak > 0 ? h('span.home-streak', {}, `🔥 ${streak}`) : null,
+    ]),
+    h('h1.home-topic', {}, topic),
+    h('div.home-prog', {}, [
+      h('div.progress', {}, [h('i', { class: pct === 100 ? 'good' : '', style: `width:${pct}%` })]),
+      h('span.home-count', {}, allDone ? 'Done ✓' : `${doneCount}/${total}`),
+    ]),
+    h('button.btn.primary.focus-start', { onclick: () => { unlockAudio(); openFocusMode(config); } }, '▶ Start focus'),
+    total
+      ? h('div.home-tasks', {}, tasks.map((t, i) => taskRow(iso, t, done.has(t.id), i === firstUndone)))
+      : h('p.home-empty', {}, 'Nothing scheduled today — rest up.'),
+    blocks && blocks.length ? h('details.home-schedule', {}, [
+      h('summary', {}, 'Schedule'),
+      h('div.timeline', { style: 'margin-top:10px' }, blocks.map(b => h('div.tl-row', {}, [
+        h('div.tl-time', {}, b.start),
+        h('div', { class: 'tl-block ' + b.kind }, [h('div.t', {}, b.title), h('div.d.faint', {}, `${b.start}–${b.end}`)]),
+      ]))),
+      h('button.btn.sm.ghost.mt', { onclick: () => exportDay(iso, blocks) }, '📅 Export to calendar'),
+    ]) : null,
+  ]);
+}
+
+function taskRow(iso, t, isDone, isNext) {
+  const links = isNext ? (t.topic.resourceRefs || []).map(r => RESOURCES[r]).filter(Boolean) : [];
+  return h('label', { class: 'trow' + (isDone ? ' done' : '') + (isNext ? ' next' : '') }, [
+    h('input', { type: 'checkbox', checked: isDone, onchange: (e) => toggleTask(iso, t.id, e.target.checked) }),
+    h('div.trow-body', {}, [
+      h('span.trow-title', {}, t.title),
+      links.length ? h('div.trow-links', {}, links.map(l => h('a', { href: l.url, target: '_blank', rel: 'noopener' }, l.label))) : null,
     ]),
   ]);
 }
