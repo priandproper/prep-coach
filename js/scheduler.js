@@ -136,7 +136,7 @@ export function layoutDay(plan, config, sched, iso, override) {
   for (let i = 0; i < topics.length; i++) {
     const mins = Math.round(topics[i].estHours * 60);
     cursor = fitBefore(cursor, mins, fixed);
-    blocks.push(block(fromMin(cursor), fromMin(cursor + mins), 'study', topics[i].title, topics[i].summary, topics[i].id));
+    blocks.push(block(fromMin(cursor), fromMin(cursor + mins), 'study', 'Study: ' + topics[i].title, topics[i].summary, topics[i].id));
     cursor += mins;
     if (i < topics.length - 1) {
       sinceBreak++;

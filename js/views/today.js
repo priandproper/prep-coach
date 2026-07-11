@@ -142,7 +142,11 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
         ? h('div', {}, [
             h('div.timeline', {}, blocks.map(b => h('div.tl-row', {}, [
               h('div.tl-time', {}, b.start),
-              h('div', { class: 'tl-block ' + b.kind }, [h('div.t', {}, b.title), h('div.d.faint', {}, `${b.start}–${b.end}`)]),
+              h('div', { class: 'tl-block ' + b.kind }, [
+                h('div.t', {}, b.title),
+                b.detail ? h('div.d', {}, b.detail) : null,
+                h('div.d.faint', {}, `${b.start}–${b.end}`),
+              ]),
             ]))),
             h('button.btn.sm.ghost.mt', { onclick: () => exportDay(iso, blocks) }, '📅 Export to calendar'),
           ])
