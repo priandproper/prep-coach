@@ -119,7 +119,20 @@ export function layoutDay(plan, config, sched, iso, override) {
   if (cursor < peakStart && topics.some(t => t.load === 'high')) cursor = skipFixed(Math.max(cursor, peakStart), fixed);
 
   const pomo = config.pomodoro;
+  const jobSplit = override && override.jobSplit;
+  const jobFirstMins = jobSplit ? Math.round(jobMins / 2) : 0;
+  const jobDetail = 'Apply to roles, send connection requests, follow up on coffee chats';
+  let jobFirstPlaced = false;
   let sinceBreak = 0;
+
+  // Split job time → a first block in the morning, the rest at day's end.
+  if (jobSplit && jobFirstMins > 0) {
+    cursor = skipFixed(cursor, fixed);
+    blocks.push(block(fromMin(cursor), fromMin(cursor + jobFirstMins), 'job', 'Applications', jobDetail));
+    cursor = skipFixed(cursor + jobFirstMins, fixed);
+    jobFirstPlaced = true;
+  }
+
   for (let i = 0; i < topics.length; i++) {
     const mins = Math.round(topics[i].estHours * 60);
     cursor = fitBefore(cursor, mins, fixed);
@@ -141,9 +154,11 @@ export function layoutDay(plan, config, sched, iso, override) {
     cursor += a.minutes || 30;
   }
 
-  cursor = skipFixed(cursor, fixed);
-  blocks.push(block(fromMin(cursor), fromMin(cursor + jobMins), 'job', 'LinkedIn + applications',
-    'Apply to roles, send connection requests, follow up on coffee chats'));
+  const jobEndMins = jobFirstPlaced ? (jobMins - jobFirstMins) : jobMins;
+  if (jobEndMins > 0) {
+    cursor = skipFixed(cursor, fixed);
+    blocks.push(block(fromMin(cursor), fromMin(cursor + jobEndMins), 'job', 'Applications', jobDetail));
+  }
 
   return blocks.sort((a, b) => toMin(a.start) - toMin(b.start));
 }

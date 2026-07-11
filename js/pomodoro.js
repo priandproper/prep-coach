@@ -11,8 +11,10 @@ export class Pomodoro {
     this.remaining = 0;             // seconds
     this.completed = 0;             // completed work sessions
     this._int = null;
+    this.askOnComplete = false;     // if true, ask "break?" instead of auto-starting one
     this.onTick = () => {};
     this.onPhase = () => {};
+    this.onAsk = () => {};          // fired when a work block ends in 'ask' mode
   }
 
   _phaseSeconds(phase) {
@@ -41,6 +43,14 @@ export class Pomodoro {
     clearInterval(this._int);
     if (this.phase === 'work') {
       this.completed++;
+      if (this.askOnComplete) {
+        // Don't force a break — check in and let the user decide.
+        this.phase = 'idle'; this.remaining = 0;
+        this.onPhase('idle');
+        notify('Nice focus ✅', 'Been going a while — take a break, or keep going?', 'pomo');
+        this.onAsk();
+        return;
+      }
       const isLong = this.completed % this.cfg.longEvery === 0;
       const next = isLong ? 'long' : 'short';
       notify('Focus block done ✅', isLong ? 'Take a longer break — stretch and step away.' : 'Short break. Water, eyes off screen.', 'pomo');

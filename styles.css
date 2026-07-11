@@ -459,6 +459,10 @@ hr.sep { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
 .dp-what { flex: 1; }
 .dp-check { display: flex; align-items: center; gap: 8px; flex: 1; font-weight: 600; cursor: pointer; }
 .dp-check input { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
+.dp-seg { display: flex; border: 1px solid var(--line-2); border-radius: 10px; overflow: hidden; margin-top: 4px; }
+.dp-segbtn { flex: 1; padding: 9px 12px; background: var(--panel); border: none; border-right: 1px solid var(--line-2); color: var(--muted); font-weight: 600; font-size: 13.5px; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.dp-segbtn:last-child { border-right: none; }
+.dp-segbtn.active { background: var(--accent); color: var(--accent-ink); }
 
 /* ---------- tactile polish ---------- */
 .td-nav, .jobbtn, .space-btn, .fo-btn, .fo-end, .td-center { transition: transform 0.12s ease-out, background 0.15s, border-color 0.15s, color 0.15s; }

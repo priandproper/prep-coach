@@ -159,6 +159,8 @@ function defaultDayPlan(config) {
     gym: { go: false, time: '07:00', mins: 60 },
     walk: { go: false, time: '18:00', mins: 30 },
     others: [],
+    jobMins: config.jobSearch.dailyMinutes || 120,
+    jobSplit: false,
     hardStop: '21:00',
   };
 }
@@ -181,7 +183,7 @@ function dayPlanToOverride(dp) {
     if (o.time) item.time = o.time;
     acts.push(item);
   });
-  return { wakeTime: dp.wake, activities: acts };
+  return { wakeTime: dp.wake, activities: acts, jobMinutes: dp.jobMins, jobSplit: !!dp.jobSplit };
 }
 
 function openDayPlanner(iso) {
@@ -224,6 +226,16 @@ function openDayPlanner(iso) {
         h('button.jobbtn', { 'aria-label': 'Remove', onclick: () => { dp.others.splice(i, 1); draw(); } }, '×'),
       ])),
       h('button.btn.ghost.sm', { onclick: () => { dp.others.push({ label: '', time: '', mins: 60 }); draw(); } }, '+ Add a plan'),
+
+      h('div.dp-label', {}, 'Job applications'),
+      h('div.dp-row', {}, [
+        h('span', { style: 'flex:1' }, 'Time today (min)'),
+        numInput(dp.jobMins, (v) => { dp.jobMins = v; }),
+      ]),
+      h('div.dp-seg', {}, [
+        h('button', { class: 'dp-segbtn' + (!dp.jobSplit ? ' active' : ''), onclick: () => { dp.jobSplit = false; draw(); } }, 'One block'),
+        h('button', { class: 'dp-segbtn' + (dp.jobSplit ? ' active' : ''), onclick: () => { dp.jobSplit = true; draw(); } }, 'Split in two'),
+      ]),
 
       h('label.field', { style: 'margin-top:16px' }, [h('span', {}, 'Wrap up by (optional)'), timeInput(dp.hardStop, (v) => { dp.hardStop = v; })]),
     ]);
@@ -528,11 +540,17 @@ function openFocusMode(config) {
   }, 'Pause');
   const skipBtn = h('button.fo-btn', { hidden: true, onclick: () => { lastBase = 'idle'; pomo.start('work'); } }, 'Skip break →');
   const endBtn = h('button.fo-end', { onclick: () => endFocusMode(iso) }, 'End session');
+  const controlsEl = h('div.fo-controls', {}, [pauseBtn, skipBtn]);
+  const normalControls = () => mount(controlsEl, [pauseBtn, skipBtn]);
+  const askControls = () => mount(controlsEl, [
+    h('button.fo-btn.primary', { onclick: () => { const isLong = pomo.completed % pomo.cfg.longEvery === 0; pomo.start(isLong ? 'long' : 'short'); } }, `Take a ${pomo.cfg.shortBreak}-min break`),
+    h('button.fo-btn', { onclick: () => { pomo.start('work'); } }, 'Keep going'),
+  ]);
 
   const overlay = h('div.focus-overlay.focus', {}, [
     h('div.fo-top', {}, [phaseEl, endBtn]),
     h('div.fo-center', {}, [dial, taskBox]),
-    h('div.fo-controls', {}, [pauseBtn, skipBtn]),
+    controlsEl,
   ]);
 
   pomo.onTick = (sec) => {
@@ -549,7 +567,19 @@ function openFocusMode(config) {
     skipBtn.hidden = !isBreak;
     phaseTotal = base === 'short' ? pomo.cfg.shortBreak * 60 : base === 'long' ? pomo.cfg.longBreak * 60 : pomo.cfg.work * 60;
     if (progCircle) progCircle.style.strokeDashoffset = '0';
+    if (base === 'work' || base === 'short' || base === 'long') normalControls();
     if (base !== lastBase) { playBeep(); lastBase = base; }
+  };
+
+  // Break check-in: in "ask" mode, a finished work block asks instead of auto-breaking.
+  pomo.askOnComplete = config.pomodoro.breakMode === 'ask';
+  pomo.onAsk = () => {
+    phaseEl.textContent = `${pomo.cfg.work} min done — need a break?`;
+    taskBox.style.visibility = 'hidden';
+    timeEl.textContent = Pomodoro.fmt(pomo.cfg.shortBreak * 60);
+    if (progCircle) progCircle.style.strokeDashoffset = '0';
+    askControls();
+    playBeep();
   };
 
   document.body.appendChild(overlay);

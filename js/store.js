@@ -69,13 +69,13 @@ function defaults() {
           ],
         },
       ],
-      pomodoro: { work: 25, shortBreak: 5, longBreak: 15, longEvery: 4 },
+      pomodoro: { work: 25, shortBreak: 5, longBreak: 15, longEvery: 4, breakMode: 'auto' }, // 'auto' | 'ask'
       jobSearch: {
         weeklyApplications: 12,      // target 10–15/week
         weeklyCoffeeChats: 10,
         eadDeadline: addDays(start, 89), // <90 days from today
         consultantNote: 'Consultant is applying on my behalf — I complement it with my own apps + chats.',
-        dailyMinutes: 40,            // daily LinkedIn / applications block
+        dailyMinutes: 120,           // daily applications time (2 hrs)
       },
     },
     plan,   // { goal, startDate, horizonDays, topics[] }

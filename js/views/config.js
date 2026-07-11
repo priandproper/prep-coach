@@ -100,15 +100,26 @@ function spacesCard(c) {
 
 function pomodoroCard(c) {
   const p = c.pomodoro;
+  const seg = (label, val) => h('button', {
+    class: 'dp-segbtn' + (p.breakMode === val ? ' active' : ''),
+    onclick: () => { p.breakMode = val; store.save(); },
+  }, label);
   return h('div.card', {}, [
-    h('h2', {}, 'Pomodoro'),
-    h('p.sub', {}, 'Focus/break lengths for the Today timer.'),
+    h('h2', {}, 'Focus timer'),
+    h('p.sub', {}, 'Focus/break lengths, and how breaks are handled.'),
     h('div.inline', {}, [
       num('Focus (min)', p.work, { min: 5, step: 5 }, v => { p.work = Math.max(5, v); store.save(); }),
       num('Short break (min)', p.shortBreak, { min: 1 }, v => { p.shortBreak = Math.max(1, v); store.save(); }),
       num('Long break (min)', p.longBreak, { min: 1 }, v => { p.longBreak = Math.max(1, v); store.save(); }),
       num('Long break every N', p.longEvery, { min: 2 }, v => { p.longEvery = Math.max(2, v); store.save(); }),
     ]),
+    h('label.field.mt', {}, [
+      h('span', {}, 'Breaks'),
+      h('div.dp-seg', {}, [seg('Automatic', 'auto'), seg('Ask me each time', 'ask')]),
+    ]),
+    h('p.hint', {}, p.breakMode === 'ask'
+      ? `After each ${p.work}-min focus block, prep-coach checks in — take a break or keep going.`
+      : `Breaks start automatically after each ${p.work}-min focus block.`),
   ]);
 }
 
