@@ -16,11 +16,11 @@
   --muted: #6d685f;        /* warm grey */
   --faint: #a39e93;
 
-  /* action (monochrome — charcoal is the accent) */
-  --accent: #201e1a;
-  --accent-strong: #000000;
-  --accent-soft: #e8e3d8;  /* soft wash for active states / chips */
-  --accent-ink: #f6f3ec;   /* ivory text on charcoal */
+  /* action — hunter green on ivory */
+  --accent: #2f5d3f;       /* hunter green */
+  --accent-strong: #244a32;
+  --accent-soft: #e4ece5;  /* pale green wash */
+  --accent-ink: #f6f3ec;   /* ivory text on green */
 
   --good: #4f7a5a;
   --warn: #a9772b;    --warn-soft: #f2e7d2;
@@ -117,9 +117,19 @@ a { color: var(--text); }
 .home-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--muted); }
 .home-streak { font-size: 13px; font-weight: 800; color: var(--text); background: var(--accent-soft); border: 1px solid var(--line-2); border-radius: 999px; padding: 3px 10px; }
 .home-topic { margin: 0 0 20px; font-size: 26px; font-weight: 800; letter-spacing: -0.7px; line-height: 1.14; }
-.home-prog { display: flex; align-items: center; gap: 13px; margin-bottom: 22px; }
-.home-prog .progress { flex: 1; height: 5px; margin: 0; }
-.home-count { font-size: 12px; font-weight: 800; color: var(--muted); min-width: 34px; text-align: right; letter-spacing: 0.5px; }
+.home-streakbar { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+.home-hero { text-align: center; margin-bottom: 4px; }
+.home-hero .home-eyebrow { display: block; margin-bottom: 8px; }
+.home-hero .home-topic { margin: 0 0 22px; font-size: clamp(24px, 7vw, 30px); }
+.home-hero .focus-start { max-width: 380px; margin: 0 auto; }
+
+.home-ring { position: relative; width: 168px; height: 168px; margin: 8px auto 22px; }
+.home-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.hr-track { fill: none; stroke: var(--line); stroke-width: 9; }
+.hr-prog { fill: none; stroke: var(--accent); stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; filter: drop-shadow(0 3px 9px rgba(47, 93, 63, 0.28)); }
+.home-ring-center { position: absolute; inset: 0; display: grid; place-items: center; }
+.hr-count { font-size: 40px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
+.hr-label { font-size: 10px; letter-spacing: 2px; color: var(--muted); font-weight: 700; margin-top: 5px; }
 
 .focus-start {
   width: 100%; padding: 16px; font-size: 15px; font-weight: 800; letter-spacing: 0.8px;

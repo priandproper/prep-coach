@@ -87,16 +87,13 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
   const firstUndone = tasks.findIndex(t => !done.has(t.id));
 
   return h('div.home', {}, [
-    h('div.home-top', {}, [
-      h('span.home-eyebrow', {}, `DAY ${dayIdx + 1} · ${plan.horizonDays}-DAY SPRINT`),
-      streak > 0 ? h('span.home-streak', {}, `🔥 ${streak}`) : null,
+    streak > 0 ? h('div.home-streakbar', {}, h('span.home-streak', {}, `🔥 ${streak} day${streak > 1 ? 's' : ''}`)) : null,
+    h('div.home-hero', {}, [
+      homeRing(pct, doneCount, total, allDone),
+      h('div.home-eyebrow', {}, `DAY ${dayIdx + 1} · ${plan.horizonDays}-DAY SPRINT`),
+      h('h1.home-topic', {}, topic),
+      h('button.btn.primary.focus-start', { onclick: () => { unlockAudio(); openFocusMode(config); } }, 'Start focus →'),
     ]),
-    h('h1.home-topic', {}, topic),
-    h('div.home-prog', {}, [
-      h('div.progress', {}, [h('i', { class: pct === 100 ? 'good' : '', style: `width:${pct}%` })]),
-      h('span.home-count', {}, allDone ? 'Done ✓' : `${doneCount}/${total}`),
-    ]),
-    h('button.btn.primary.focus-start', { onclick: () => { unlockAudio(); openFocusMode(config); } }, 'Start focus →'),
     total
       ? h('div.home-tasks', {}, tasks.map((t, i) => taskRow(iso, t, done.has(t.id), i === firstUndone)))
       : h('p.home-empty', {}, 'Nothing scheduled today — rest up.'),
@@ -109,6 +106,23 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
       h('button.btn.sm.ghost.mt', { onclick: () => exportDay(iso, blocks) }, '📅 Export to calendar'),
     ]) : null,
   ]);
+}
+
+function homeRing(pct, doneCount, total, allDone) {
+  const R = 66, C = 2 * Math.PI * R;
+  const off = C * (1 - (total ? pct / 100 : 0));
+  const ring = h('div.home-ring', {
+    html:
+      '<svg viewBox="0 0 160 160" aria-hidden="true">' +
+      '<circle class="hr-track" cx="80" cy="80" r="' + R + '"/>' +
+      '<circle class="hr-prog" cx="80" cy="80" r="' + R + '" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '"/>' +
+      '</svg>',
+  });
+  ring.appendChild(h('div.home-ring-center', {}, [
+    h('div.hr-count', {}, total ? `${doneCount}/${total}` : '0'),
+    h('div.hr-label', {}, total ? (allDone ? 'DONE ✓' : 'TASKS') : 'REST DAY'),
+  ]));
+  return ring;
 }
 
 function taskRow(iso, t, isDone, isNext) {
