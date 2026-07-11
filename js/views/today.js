@@ -74,8 +74,7 @@ export function render(root) {
   const blocks = layoutDay(plan, config, sched, iso);
 
   mount(root, [
-    riskBanner(plan, config, sched, iso, dayIdx, tasks, doneCount, allDone),
-    statsRow(plan, sched, dayIdx, doneCount, tasks.length),
+    headerHero(plan, config, sched, iso, dayIdx, tasks, doneCount, allDone),
     h('div.grid.grid-2', {}, [
       h('div', {}, [
         focusCard(config),
@@ -89,11 +88,19 @@ export function render(root) {
   ]);
 }
 
-function riskBanner(plan, config, sched, iso, dayIdx, tasks, doneCount, allDone) {
-  const remaining = tasks.length - doneCount;
-  // hours of unfinished work today
+// Warm, action-oriented header: the day's focus as a headline, a slim progress
+// bar, and streak as a subtle accent. Replaces the clinical stat tiles + banner.
+function headerHero(plan, config, sched, iso, dayIdx, tasks, doneCount, allDone) {
+  const streak = computeStreak(plan, sched);
+  const total = tasks.length;
+  const pct = total ? Math.round((doneCount / total) * 100) : 0;
+  const remaining = total - doneCount;
+
   const day = sched.days.find(d => d.iso === iso);
   const topicsToday = day ? day.topics : [];
+  const focusName = topicsToday.length ? topicsToday[0].title : 'Lighter day — rest or catch up';
+
+  // remaining focused hours + how much day is left
   const doneIds = new Set(store.dayRecord(iso).taskIds);
   let hoursLeft = 0;
   for (const t of topicsToday) {
@@ -101,45 +108,30 @@ function riskBanner(plan, config, sched, iso, dayIdx, tasks, doneCount, allDone)
     const remainItems = items.filter((_, i) => !doneIds.has(`${t.id}:${i}`)).length;
     if (items.length) hoursLeft += t.estHours * (remainItems / items.length);
   }
-  const bufferDays = plan.horizonDays - dayIdx - 1;   // days after today inside horizon
+  const bufferDays = plan.horizonDays - dayIdx - 1;
   const now = new Date();
   const hoursToMidnight = (24 * 60 - (now.getHours() * 60 + now.getMinutes())) / 60;
 
-  if (allDone) {
-    return h('div.banner.good', {}, [
-      h('div.icon', {}, '✅'),
-      h('div.body', {}, [
-        h('h3', {}, `Day ${dayIdx + 1} done. Streak protected.`),
-        h('p', {}, `You cleared everything scheduled for today. ${bufferDays} day${bufferDays === 1 ? '' : 's'} of runway left in the sprint.`),
+  // one warm line — nudge only when genuinely behind
+  let sub, subClass = '';
+  if (allDone) { sub = 'Everything for today is done — beautifully done. 🎉'; subClass = 'good'; }
+  else if (bufferDays <= 0 && remaining > 0) { sub = `${remaining} left today, and no buffer days remain — let’s keep today on track.`; subClass = 'risk'; }
+  else if (hoursLeft > hoursToMidnight && remaining > 0) { sub = `${remaining} task${remaining === 1 ? '' : 's'} left (~${fmtHours(hoursLeft)}) and the day’s getting short — best to start now.`; subClass = 'risk'; }
+  else if (remaining > 0) { sub = `${remaining} task${remaining === 1 ? '' : 's'} to clear · about ${fmtHours(hoursLeft)} of focused work.`; }
+  else { sub = 'Nothing scheduled today — enjoy the breather.'; }
+
+  return h('div.home-hero', {}, [
+    h('div.hero-eyebrow', {}, `${niceDate(iso).toUpperCase()} · DAY ${dayIdx + 1} OF ${plan.horizonDays}`),
+    h('h1.hero-title', {}, focusName),
+    h('p', { class: 'hero-sub ' + subClass }, sub),
+    h('div.hero-progress', {}, [
+      h('div.progress', {}, [h('i', { class: pct === 100 ? 'good' : '', style: `width:${pct}%` })]),
+      h('div.hero-meta', {}, [
+        h('span', {}, `${doneCount}/${total || 0} done`),
+        h('span.hero-dot', {}, '·'),
+        h('span', { class: streak > 0 ? 'hero-streak' : '' }, `🔥 ${streak}`),
       ]),
-    ]);
-  }
-
-  // cascade: if today's remaining work slips, does the sprint still finish in the horizon?
-  const slips = bufferDays <= 0;
-  const finishDay = slips ? plan.horizonDays + 1 : dayIdx + 2;
-  const level = slips ? 'bad' : (hoursLeft > hoursToMidnight ? 'warn' : 'info');
-  const icon = { bad: '⛔', warn: '⚠️', info: '⏳' }[level];
-  const msg = slips
-    ? `You have no buffer days left. Skip today and the Day-${plan.horizonDays} mock slips past your ${plan.horizonDays}-day deadline to day ${finishDay}. Do not miss today.`
-    : `${remaining} task${remaining === 1 ? '' : 's'} (~${fmtHours(hoursLeft)}) left today, ~${fmtHours(hoursToMidnight)} of day remaining. Miss today and this work pushes to tomorrow — you’d burn 1 of your ${bufferDays} buffer day${bufferDays === 1 ? '' : 's'}.`;
-
-  return h('div', { class: 'banner ' + level }, [
-    h('div.icon', {}, icon),
-    h('div.body', {}, [
-      h('h3', {}, `Day ${dayIdx + 1} of ${plan.horizonDays} — ${doneCount}/${tasks.length} done`),
-      h('p', {}, msg),
     ]),
-  ]);
-}
-
-function statsRow(plan, sched, dayIdx, doneCount, total) {
-  const streak = computeStreak(plan, sched);
-  const pct = total ? Math.round((doneCount / total) * 100) : 0;
-  return h('div.statrow.mb', {}, [
-    h('div.stat', {}, [h('div', { class: 'n ' + (streak > 0 ? 'good' : '') }, `🔥 ${streak}`), h('div.l', {}, 'Day streak')]),
-    h('div.stat', {}, [h('div.n', {}, `${dayIdx + 1}/${plan.horizonDays}`), h('div.l', {}, 'Sprint day')]),
-    h('div.stat', {}, [h('div', { class: 'n ' + (pct === 100 ? 'good' : pct > 0 ? 'warn' : 'bad') }, `${pct}%`), h('div.l', {}, 'Today complete')]),
   ]);
 }
 
@@ -183,12 +175,12 @@ function scheduleCard(iso, blocks) {
     ]),
   ]));
   return h('div.card', {}, [
-    h('div', { class: 'btn-row', style: 'justify-content:space-between;align-items:center' }, [
-      h('h2', { style: 'margin:0' }, 'Today’s schedule'),
+    h('details', {}, [
+      h('summary.card-summary', {}, 'Today’s schedule'),
+      h('p.sub', { style: 'margin-top:10px' }, 'Hardest topics sit in your peak-focus window. Export to get reminders on your phone.'),
       h('button.btn.sm', { onclick: () => exportDay(iso, blocks) }, '📅 Export to calendar'),
+      h('div.timeline', { style: 'margin-top:12px' }, rows),
     ]),
-    h('p.sub', {}, 'Hardest topics are placed in your peak-focus window. Export to get reminders on your phone.'),
-    h('div.timeline', {}, rows),
   ]);
 }
 
