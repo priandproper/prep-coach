@@ -445,6 +445,21 @@ hr.sep { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
   .fo-ring-prog { transition: none; }
 }
 
+/* plan-my-day prompt + questionnaire */
+.plan-prompt { display: flex; align-items: center; justify-content: space-between; gap: 14px; background: var(--accent-soft); border: 1px solid var(--line-2); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; }
+.pp-title { font-weight: 800; font-size: 15px; }
+.pp-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.plan-prompt .btn { flex-shrink: 0; }
+
+.dp-modal { max-width: 440px; max-height: 86vh; overflow: auto; }
+.dp-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin: 18px 0 9px; }
+.dp-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.dp-row input[type="time"] { max-width: 118px; }
+.dp-num { max-width: 76px; }
+.dp-what { flex: 1; }
+.dp-check { display: flex; align-items: center; gap: 8px; flex: 1; font-weight: 600; cursor: pointer; }
+.dp-check input { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
+
 /* ---------- tactile polish ---------- */
 .td-nav, .jobbtn, .space-btn, .fo-btn, .fo-end, .td-center { transition: transform 0.12s ease-out, background 0.15s, border-color 0.15s, color 0.15s; }
 .td-nav:active, .jobbtn:active, .space-btn:active, .fo-btn:active, .fo-end:active { transform: scale(0.94); }

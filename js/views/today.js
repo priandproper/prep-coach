@@ -91,13 +91,14 @@ export function render(root) {
   const done = new Set(rec.taskIds);
   const doneCount = tasks.filter(t => done.has(t.id)).length;
   const allDone = tasks.length > 0 && doneCount === tasks.length;
-  const blocks = layoutDay(plan, config, sched, iso);
+  const dayPlan = store.dayRecord(iso).dayPlan || null;
+  const blocks = layoutDay(plan, config, sched, iso, dayPlan ? dayPlanToOverride(dayPlan) : null);
 
-  mount(root, [homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allDone, blocks)]);
+  mount(root, [homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allDone, blocks, dayPlan)]);
 }
 
 // Tight, minimal, action-first home: where you are · one primary action · tasks.
-function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allDone, blocks) {
+function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allDone, blocks, dayPlan) {
   ensurePomo(config);
   const total = tasks.length;
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
@@ -109,6 +110,14 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
   if (heroTaskIdx == null || heroTaskIdx < 0 || heroTaskIdx >= total) heroTaskIdx = Math.max(0, firstUndone);
 
   return h('div.home', {}, [
+    // ── Plan-my-day prompt (until today is planned) ──
+    !dayPlan ? h('div.plan-prompt', {}, [
+      h('div', {}, [
+        h('div.pp-title', {}, 'Plan today'),
+        h('div.pp-sub', {}, 'Answer a few quick questions and I’ll build your schedule around your day.'),
+      ]),
+      h('button.btn.primary.sm', { onclick: () => openDayPlanner(iso) }, 'Plan my day'),
+    ]) : null,
     // ── 1 · Study ──
     h('section.home-sec', {}, [
       h('div.sec-head', {}, [
@@ -124,17 +133,121 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
     // ── 2 · Job search ──
     jobSection(config),
     // ── 3 · Schedule ──
-    blocks && blocks.length ? h('section.home-sec', {}, [
-      h('details.home-schedule', {}, [
-        h('summary', {}, [h('span.sec-title', {}, 'Schedule')]),
-        h('div.timeline', { style: 'margin-top:14px' }, blocks.map(b => h('div.tl-row', {}, [
-          h('div.tl-time', {}, b.start),
-          h('div', { class: 'tl-block ' + b.kind }, [h('div.t', {}, b.title), h('div.d.faint', {}, `${b.start}–${b.end}`)]),
-        ]))),
-        h('button.btn.sm.ghost.mt', { onclick: () => exportDay(iso, blocks) }, '📅 Export to calendar'),
+    h('section.home-sec', {}, [
+      h('div.sec-head', {}, [
+        h('span.sec-title', {}, 'Schedule'),
+        h('button.linklike', { onclick: () => openDayPlanner(iso) }, dayPlan ? 'Edit day' : 'Plan day'),
       ]),
-    ]) : null,
+      (dayPlan && blocks && blocks.length)
+        ? h('div', {}, [
+            h('div.timeline', {}, blocks.map(b => h('div.tl-row', {}, [
+              h('div.tl-time', {}, b.start),
+              h('div', { class: 'tl-block ' + b.kind }, [h('div.t', {}, b.title), h('div.d.faint', {}, `${b.start}–${b.end}`)]),
+            ]))),
+            h('button.btn.sm.ghost.mt', { onclick: () => exportDay(iso, blocks) }, '📅 Export to calendar'),
+          ])
+        : h('p.sub', { style: 'margin:0' }, 'Plan your day and I’ll lay out your study blocks around it.'),
+    ]),
   ]);
+}
+
+// ---- daily planning questionnaire ----
+function defaultDayPlan(config) {
+  return {
+    wake: config.availability.wakeTime || '08:00',
+    getReadyMins: config.availability.getReadyMins || 60,
+    gym: { go: false, time: '07:00', mins: 60 },
+    walk: { go: false, time: '18:00', mins: 30 },
+    others: [],
+    hardStop: '21:00',
+  };
+}
+
+// Convert a day plan into the scheduler's activity override.
+function dayPlanToOverride(dp) {
+  const acts = [];
+  if (dp.getReadyMins) acts.push({ label: 'Get ready', minutes: dp.getReadyMins, time: dp.wake });
+  const add = (label, a, defMins) => {
+    if (!a || !a.go) return;
+    const o = { label, minutes: a.mins || defMins };
+    if (a.time) o.time = a.time;
+    acts.push(o);
+  };
+  add('Gym', dp.gym, 60);
+  add('Walk', dp.walk, 30);
+  (dp.others || []).forEach(o => {
+    if (!o.label && !o.time) return;
+    const item = { label: o.label || 'Plan', minutes: o.mins || 60 };
+    if (o.time) item.time = o.time;
+    acts.push(item);
+  });
+  return { wakeTime: dp.wake, activities: acts };
+}
+
+function openDayPlanner(iso) {
+  const config = store.config();
+  const rec = store.dayRecord(iso);
+  const dp = rec.dayPlan ? JSON.parse(JSON.stringify(rec.dayPlan)) : defaultDayPlan(config);
+  if (!dp.gym) dp.gym = { go: false, time: '07:00', mins: 60 };
+  if (!dp.walk) dp.walk = { go: false, time: '18:00', mins: 30 };
+  if (!dp.others) dp.others = [];
+
+  const backdrop = h('div.modal-backdrop', { onclick: (e) => { if (e.target === backdrop) close(); } });
+  function close() { backdrop.remove(); }
+
+  const timeInput = (val, on) => h('input', { type: 'time', value: val || '', onchange: (e) => on(e.target.value) });
+  const numInput = (val, on) => h('input', { type: 'number', min: 0, step: 5, value: val, class: 'dp-num', onchange: (e) => on(Math.max(0, +e.target.value)) });
+
+  const body = h('div', {});
+  function draw() {
+    mount(body, [
+      h('label.field', {}, [h('span', {}, 'When did you wake up?'), timeInput(dp.wake, (v) => { dp.wake = v; })]),
+      h('label.field', {}, [h('span', {}, 'Time to get ready (min)'), numInput(dp.getReadyMins, (v) => { dp.getReadyMins = v; })]),
+
+      h('div.dp-label', {}, 'Activities today'),
+      h('div.dp-row', {}, [
+        h('label.dp-check', {}, [h('input', { type: 'checkbox', checked: dp.gym.go, onchange: (e) => { dp.gym.go = e.target.checked; } }), h('span', {}, 'Gym')]),
+        timeInput(dp.gym.time, (v) => { dp.gym.time = v; }),
+        numInput(dp.gym.mins, (v) => { dp.gym.mins = v; }),
+      ]),
+      h('div.dp-row', {}, [
+        h('label.dp-check', {}, [h('input', { type: 'checkbox', checked: dp.walk.go, onchange: (e) => { dp.walk.go = e.target.checked; } }), h('span', {}, 'Walk')]),
+        timeInput(dp.walk.time, (v) => { dp.walk.time = v; }),
+        numInput(dp.walk.mins, (v) => { dp.walk.mins = v; }),
+      ]),
+
+      h('div.dp-label', {}, 'Other plans'),
+      ...dp.others.map((o, i) => h('div.dp-row', {}, [
+        h('input', { type: 'text', placeholder: 'What?', value: o.label, class: 'dp-what', onchange: (e) => { o.label = e.target.value; } }),
+        timeInput(o.time, (v) => { o.time = v; }),
+        numInput(o.mins, (v) => { o.mins = v; }),
+        h('button.jobbtn', { 'aria-label': 'Remove', onclick: () => { dp.others.splice(i, 1); draw(); } }, '×'),
+      ])),
+      h('button.btn.ghost.sm', { onclick: () => { dp.others.push({ label: '', time: '', mins: 60 }); draw(); } }, '+ Add a plan'),
+
+      h('label.field', { style: 'margin-top:16px' }, [h('span', {}, 'Wrap up by (optional)'), timeInput(dp.hardStop, (v) => { dp.hardStop = v; })]),
+    ]);
+  }
+  draw();
+
+  const box = h('div.modal', { class: 'dp-modal' }, [
+    h('h2', {}, 'Plan today'),
+    h('p.sub', {}, 'Tell me your day — I’ll build your study blocks around it.'),
+    body,
+    h('div.modal-actions', {}, [
+      h('button.btn.ghost', { onclick: close }, 'Cancel'),
+      h('button.btn.primary', {
+        onclick: () => {
+          store.dayRecord(iso).dayPlan = dp;
+          store.save();
+          toast('Schedule built around your day. ✓');
+          close();
+        },
+      }, 'Plan my day'),
+    ]),
+  ]);
+  backdrop.appendChild(box);
+  document.body.appendChild(backdrop);
 }
 
 // Job-search section: log applications + coffee chats against weekly targets.

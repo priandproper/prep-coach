@@ -94,74 +94,77 @@ export function fitAnalysis(plan, config) {
 // Lay out one calendar day into time-ordered blocks: activities, study blocks
 // (hardest in the peak window), breaks between them, and a job-search block.
 // Returns [{ start:'HH:MM', end:'HH:MM', kind, title, detail, topicId? }].
-export function layoutDay(plan, config, sched, iso) {
+// `override` (optional) = { wakeTime, activities:[{label,minutes,time?,kind?}], jobMinutes }
+// from the day's planning questionnaire; falls back to config defaults.
+export function layoutDay(plan, config, sched, iso, override) {
   const day = sched.days.find(d => d.iso === iso);
   const blocks = [];
-  const wake = toMin(config.availability.wakeTime || '08:00');
-  let cursor = wake;
+  const wakeStr = (override && override.wakeTime) || config.availability.wakeTime || '08:00';
+  const activities = (override && override.activities) || config.activities || [];
+  const jobMins = (override && override.jobMinutes != null ? override.jobMinutes : config.jobSearch.dailyMinutes) || 30;
 
-  const activities = (config.activities || []).slice();
-  // Fixed-time activities are inserted at their time; floating ones interleave.
-  const fixed = activities.filter(a => a.time).sort((a, b) => toMin(a.time) - toMin(b.time));
+  // Fixed = has a time (placed at that time, study flows around it). Floating = after study.
+  const fixed = activities.filter(a => a.time)
+    .map(a => ({ ...a, s: toMin(a.time), e: toMin(a.time) + (a.minutes || 30) }))
+    .sort((x, y) => x.s - y.s);
   const floating = activities.filter(a => !a.time);
 
-  const peakStart = toMin(config.cognitiveLoad.peakStart || '09:00');
+  for (const a of fixed) blocks.push(block(fromMin(a.s), fromMin(a.e), a.kind || 'activity', a.label, ''));
 
-  // Order today's topics: hardest (high load) first so they get the peak slot.
+  const peakStart = toMin(config.cognitiveLoad.peakStart || '09:00');
   const loadRank = { high: 0, medium: 1, low: 2 };
   const topics = day ? [...day.topics].sort((a, b) => (loadRank[a.load] ?? 1) - (loadRank[b.load] ?? 1)) : [];
 
-  // Place a fixed morning activity before study if it's early.
-  const usedFixed = new Set();
-  function placeFixedBefore(minute) {
-    for (const a of fixed) {
-      if (usedFixed.has(a.id)) continue;
-      if (toMin(a.time) <= minute) {
-        blocks.push(block(a.time, addMin(a.time, a.minutes), 'activity', a.label, ''));
-        usedFixed.add(a.id);
-      }
-    }
-  }
-
-  placeFixedBefore(cursor);
-  // If study should start in the peak window, jump the cursor there.
-  if (cursor < peakStart && topics.some(t => t.load === 'high')) cursor = Math.max(cursor, peakStart);
+  let cursor = skipFixed(toMin(wakeStr), fixed);
+  if (cursor < peakStart && topics.some(t => t.load === 'high')) cursor = skipFixed(Math.max(cursor, peakStart), fixed);
 
   const pomo = config.pomodoro;
   let sinceBreak = 0;
-  for (const t of topics) {
-    placeFixedBefore(cursor);
-    const startStr = fromMin(cursor);
-    const mins = Math.round(t.estHours * 60);
-    blocks.push(block(startStr, fromMin(cursor + mins), 'study', t.title, t.summary, t.id));
+  for (let i = 0; i < topics.length; i++) {
+    const mins = Math.round(topics[i].estHours * 60);
+    cursor = fitBefore(cursor, mins, fixed);
+    blocks.push(block(fromMin(cursor), fromMin(cursor + mins), 'study', topics[i].title, topics[i].summary, topics[i].id));
     cursor += mins;
-    // insert a short break after each study topic (except the last)
-    sinceBreak++;
-    const isLast = t === topics[topics.length - 1];
-    if (!isLast) {
+    if (i < topics.length - 1) {
+      sinceBreak++;
       const brk = (sinceBreak % pomo.longEvery === 0) ? pomo.longBreak : pomo.shortBreak;
-      blocks.push(block(fromMin(cursor), fromMin(cursor + brk), 'break', 'Break', 'Stand up, water, look away from the screen'));
+      cursor = skipFixed(cursor, fixed);
+      blocks.push(block(fromMin(cursor), fromMin(cursor + brk), 'break', 'Break', 'Stand, water, look away'));
       cursor += brk;
     }
+    cursor = skipFixed(cursor, fixed);
   }
 
-  // Any remaining floating activities + fixed ones not yet placed, after study.
   for (const a of floating) {
-    blocks.push(block(fromMin(cursor), fromMin(cursor + a.minutes), 'activity', a.label, ''));
-    cursor += a.minutes;
-  }
-  for (const a of fixed) {
-    if (!usedFixed.has(a.id)) {
-      blocks.push(block(a.time, addMin(a.time, a.minutes), 'activity', a.label, ''));
-    }
+    cursor = skipFixed(cursor, fixed);
+    blocks.push(block(fromMin(cursor), fromMin(cursor + (a.minutes || 30)), a.kind || 'activity', a.label, ''));
+    cursor += a.minutes || 30;
   }
 
-  // Job-search block — always present so it's never optional.
-  const jm = config.jobSearch.dailyMinutes || 30;
-  blocks.push(block(fromMin(cursor), fromMin(cursor + jm), 'job', 'LinkedIn + job applications',
+  cursor = skipFixed(cursor, fixed);
+  blocks.push(block(fromMin(cursor), fromMin(cursor + jobMins), 'job', 'LinkedIn + applications',
     'Apply to roles, send connection requests, follow up on coffee chats'));
 
   return blocks.sort((a, b) => toMin(a.start) - toMin(b.start));
+}
+
+// If cursor falls inside a fixed block, jump to that block's end (repeat).
+function skipFixed(cursor, fixed) {
+  let moved = true;
+  while (moved) { moved = false; for (const a of fixed) { if (cursor >= a.s && cursor < a.e) { cursor = a.e; moved = true; } } }
+  return cursor;
+}
+// Ensure a [cursor, cursor+dur] block doesn't straddle a fixed block; else jump past it.
+function fitBefore(cursor, dur, fixed) {
+  cursor = skipFixed(cursor, fixed);
+  let moved = true;
+  while (moved) {
+    moved = false;
+    for (const a of fixed) {
+      if (cursor < a.e && cursor + dur > a.s) { cursor = skipFixed(a.e, fixed); moved = true; break; }
+    }
+  }
+  return cursor;
 }
 
 // Which curriculum day-index is "today" (0-based), or -1 if outside horizon.
