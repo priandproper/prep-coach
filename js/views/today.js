@@ -145,6 +145,10 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
               h('div', { class: 'tl-block ' + b.kind }, [
                 h('div.t', {}, b.title),
                 b.detail ? h('div.d', {}, b.detail) : null,
+                (b.kind === 'study' && b.topicId)
+                  ? h('ul.tl-tasks', {}, tasks.filter(t => t.topic.id === b.topicId).map(t =>
+                      h('li', { class: done.has(t.id) ? 'done' : '' }, t.title)))
+                  : null,
                 h('div.d.faint', {}, `${b.start}–${b.end}`),
               ]),
             ]))),

@@ -276,6 +276,11 @@ details[open] > .card-summary::after { content: "⌃"; }
 .tl-block.break { border-left-color: var(--good); background: var(--bg-soft); }
 .tl-block.activity { border-left-color: var(--warn); background: var(--bg-soft); }
 .tl-block.job { border-left-color: #5c7c9e; }
+.tl-tasks { list-style: none; margin: 9px 0 2px; padding: 0; }
+.tl-tasks li { font-size: 12.5px; color: var(--text); padding: 3px 0 3px 20px; position: relative; }
+.tl-tasks li::before { content: "○"; position: absolute; left: 0; color: var(--faint); font-size: 13px; }
+.tl-tasks li.done { color: var(--faint); text-decoration: line-through; }
+.tl-tasks li.done::before { content: "✓"; color: var(--accent); }
 
 /* ---------- forms ---------- */
 label.field { display: block; margin-bottom: 14px; }
