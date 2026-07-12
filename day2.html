@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>prep-coach · Day 2 learning plan</title>
+<style>
+  :root{
+    --bg:#f4f1ea; --panel:#fbfaf6; --soft:#eee9df; --line:#e4dfd3; --line2:#d6d0c2;
+    --text:#201e1a; --muted:#6d685f; --faint:#a39e93;
+    --accent:#2f5d3f; --accent-strong:#244a32; --accent-soft:#e4ece5; --ink:#f6f3ec;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;font-size:15.5px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:34px 22px 90px}
+  header.top{display:flex;align-items:center;gap:11px;margin-bottom:6px}
+  .logo{width:30px;height:30px;border-radius:9px;background:var(--accent);color:var(--ink);display:grid;place-items:center;font-size:16px}
+  .brand{font-weight:800}
+  h1{font-size:33px;letter-spacing:-.7px;margin:16px 0 6px;line-height:1.1}
+  h1 .day{color:var(--accent-strong)}
+  .lede{color:var(--muted);font-size:16px;margin:0 0 6px}
+  h2{font-size:22px;letter-spacing:-.3px;margin:36px 0 6px}
+  h2 .n{font-size:13px;font-weight:800;font-family:var(--sans);color:var(--ink);background:var(--accent);border-radius:8px;padding:3px 9px;margin-right:8px;vertical-align:middle;letter-spacing:.5px}
+  h3{font-size:15px;margin:22px 0 6px}
+  p{margin:9px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:20px 22px;box-shadow:0 3px 14px rgba(47,45,40,.05);margin:14px 0}
+  .goal{border-left:4px solid var(--accent);background:var(--accent-soft)}
+  .goal h3{margin-top:0;font-size:17px}
+  .muted{color:var(--muted)}.faint{color:var(--faint)}
+  code{font-family:var(--mono);font-size:13.5px;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--accent-strong)}
+  pre{background:#211f1b;color:#f3ead9;border-radius:11px;padding:15px 17px;overflow:auto;font-size:13px;line-height:1.55;font-family:var(--mono);position:relative}
+  pre .kw{color:#9ec7a0}.st{color:#e0a58a}.cm{color:#8a8676;font-style:italic}.fn{color:#e8c07d}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.6px}
+  tr:last-child td{border-bottom:none}
+  .time{white-space:nowrap;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+  .concept{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0;background:var(--panel)}
+  .concept .name{font-weight:800;font-size:16px}
+  .concept .name code{background:var(--accent-soft);color:var(--accent-strong)}
+  .q{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0;background:var(--panel)}
+  .q .qh{font-weight:700}
+  .q .badge{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;margin-left:8px;border:1px solid var(--line2);vertical-align:middle}
+  .badge.core{color:var(--accent-strong);background:var(--accent-soft);border-color:#cfe0d2}
+  .badge.stretch{color:#a5573b;background:#f4e2d9;border-color:#ecd2c6}
+  .hint{color:var(--muted);font-size:14px;margin-top:6px}
+  details{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+  summary{cursor:pointer;font-weight:600;color:var(--accent-strong);font-size:14px}
+  ul.check{list-style:none;padding:0;margin:8px 0}
+  ul.check li{padding:6px 0 6px 30px;position:relative}
+  ul.check li:before{content:"☐";position:absolute;left:4px;color:var(--accent);font-size:17px}
+  .gotcha{border-left:4px solid #b0843a;background:#f6edda;border-radius:10px;padding:12px 16px;margin:10px 0;font-size:14.5px}
+  a{color:var(--accent-strong);font-weight:600}
+  .pillrow{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 0}
+  .pill{font-size:12px;border:1px solid var(--line2);background:var(--soft);border-radius:999px;padding:3px 10px;color:var(--muted)}
+  footer{margin-top:40px;color:var(--faint);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+  @media (max-width:600px){ .wrap{padding:22px 15px 70px} h1{font-size:27px} h2{font-size:20px} pre{font-size:12px;padding:14px} table{font-size:13px} th,td{padding:7px 8px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><span class="logo">◎</span><span class="brand">prep-coach</span><span class="faint" style="margin-left:auto;font-size:13px">Sprint Day 2 of 10</span></header>
+
+  <h1><span class="day">Day 2</span> — Filter with precision</h1>
+  <p class="lede">Filter exactly the rows you want, handle missing data correctly, and shape text &amp; dates. This is where "looks right" and "is right" start to diverge — NULLs especially.</p>
+
+  <div class="card goal">
+    <h3>🎯 Definition of done for today</h3>
+    <p style="margin:0">You can filter with <code>IN</code> / <code>BETWEEN</code> / <code>LIKE</code>, handle <code>NULL</code> correctly (and explain why <code>= NULL</code> fails), and use common string &amp; date functions — <strong>without looking them up.</strong></p>
+    <div class="pillrow"><span class="pill">~4 hrs</span><span class="pill">builds on Day 1</span><span class="pill">same practice DB</span></div>
+  </div>
+
+  <h2><span class="n">PLAN</span>Today's schedule</h2>
+  <div class="card" style="padding:8px 22px">
+  <table>
+    <tr><th>Time</th><th>Block</th><th>What you do</th></tr>
+    <tr><td class="time">Warm-up</td><td>🔧 15 min</td><td>Reopen your DB Fiddle from Day 1 (seed below if you need it). Phone away.</td></tr>
+    <tr><td class="time">Learn</td><td>📘 45 min</td><td>Read the concept primer + SQLBolt lesson 3 (LIKE) if you haven't</td></tr>
+    <tr><td class="time">Practice</td><td>🎯 45 min</td><td>Queries 1–5 (IN / BETWEEN / LIKE)</td></tr>
+    <tr><td class="time">Break</td><td>☕ 10 min</td><td>Stand, water, eyes off screen</td></tr>
+    <tr><td class="time">Practice</td><td>🎯 50 min</td><td>Queries 6–10 (NULLs, strings, dates) + note gotchas</td></tr>
+    <tr><td class="time">Reps</td><td>💪 40 min</td><td>Solve 6 "Easy" questions on DataLemur</td></tr>
+    <tr><td class="time">Job</td><td>💼 block</td><td>Applications + LinkedIn (log in the app)</td></tr>
+    <tr><td class="time">Wrap</td><td>✅ 5 min</td><td>Check off Day 2 in prep-coach → note gotchas</td></tr>
+  </table>
+  </div>
+
+  <h2><span class="n">SETUP</span>Same practice database</h2>
+  <p>Use the same DB Fiddle you built on Day 1. Lost it? Open <a href="https://www.db-fiddle.com/" target="_blank" rel="noopener">DB Fiddle</a> (PostgreSQL 15) and paste this again:</p>
+  <details><summary>Show the seed SQL again</summary>
+  <pre><span class="cm">-- prep-coach practice DB: marketing funnel</span>
+<span class="kw">CREATE TABLE</span> campaigns (campaign_id <span class="kw">INT</span>, channel <span class="kw">VARCHAR</span>(30), name <span class="kw">VARCHAR</span>(60), start_date <span class="kw">DATE</span>, budget <span class="kw">NUMERIC</span>(10,2));
+<span class="kw">CREATE TABLE</span> leads (lead_id <span class="kw">INT</span>, campaign_id <span class="kw">INT</span>, created_date <span class="kw">DATE</span>, country <span class="kw">VARCHAR</span>(20), company_size <span class="kw">VARCHAR</span>(20), status <span class="kw">VARCHAR</span>(20));
+<span class="kw">INSERT INTO</span> campaigns <span class="kw">VALUES</span>
+ (1,<span class="st">'Paid Search'</span>,<span class="st">'Q3 Brand Search'</span>,<span class="st">'2025-07-01'</span>,8000),(2,<span class="st">'LinkedIn'</span>,<span class="st">'Q3 ABM Enterprise'</span>,<span class="st">'2025-07-15'</span>,12000),
+ (3,<span class="st">'Email'</span>,<span class="st">'Q3 Nurture Drip'</span>,<span class="st">'2025-07-05'</span>,2000),(4,<span class="st">'Webinar'</span>,<span class="st">'Banking Trends Webinar'</span>,<span class="st">'2025-08-01'</span>,5000),
+ (5,<span class="st">'Paid Search'</span>,<span class="st">'Q2 Competitor Terms'</span>,<span class="st">'2025-04-10'</span>,6500),(6,<span class="st">'Events'</span>,<span class="st">'Fintech Summit Booth'</span>,<span class="st">'2025-06-20'</span>,15000),
+ (7,<span class="st">'LinkedIn'</span>,<span class="st">'Q3 Thought Leadership'</span>,<span class="st">'2025-07-22'</span>,3000),(8,<span class="st">'Email'</span>,<span class="st">'Q2 Reengagement'</span>,<span class="st">'2025-05-02'</span>,1500);
+<span class="kw">INSERT INTO</span> leads <span class="kw">VALUES</span>
+ (101,1,<span class="st">'2025-07-03'</span>,<span class="st">'US'</span>,<span class="st">'Enterprise'</span>,<span class="st">'mql'</span>),(102,1,<span class="st">'2025-07-04'</span>,<span class="st">'US'</span>,<span class="st">'Mid'</span>,<span class="st">'sql'</span>),
+ (103,2,<span class="st">'2025-07-16'</span>,<span class="st">'UK'</span>,<span class="st">'Enterprise'</span>,<span class="st">'demo'</span>),(104,2,<span class="st">'2025-07-18'</span>,<span class="st">'Germany'</span>,<span class="st">'Enterprise'</span>,<span class="st">'won'</span>),
+ (105,3,<span class="st">'2025-07-06'</span>,<span class="st">'US'</span>,<span class="st">'SMB'</span>,<span class="st">'new'</span>),(106,3,<span class="st">'2025-07-09'</span>,<span class="st">'India'</span>,<span class="kw">NULL</span>,<span class="st">'lost'</span>),
+ (107,4,<span class="st">'2025-08-02'</span>,<span class="st">'US'</span>,<span class="st">'Mid'</span>,<span class="st">'demo'</span>),(108,4,<span class="st">'2025-08-03'</span>,<span class="st">'Canada'</span>,<span class="st">'SMB'</span>,<span class="st">'mql'</span>),
+ (109,5,<span class="st">'2025-04-12'</span>,<span class="st">'US'</span>,<span class="st">'Enterprise'</span>,<span class="st">'won'</span>),(110,5,<span class="st">'2025-04-15'</span>,<span class="st">'UK'</span>,<span class="st">'Mid'</span>,<span class="kw">NULL</span>),
+ (115,8,<span class="st">'2025-05-04'</span>,<span class="st">'UK'</span>,<span class="kw">NULL</span>,<span class="st">'lost'</span>),(120,3,<span class="st">'2025-07-11'</span>,<span class="st">'US'</span>,<span class="st">'SMB'</span>,<span class="st">'won'</span>);</pre>
+  </details>
+
+  <h2><span class="n">LEARN</span>Concept primer</h2>
+
+  <div class="concept"><div class="name"><code>IN</code> · <code>BETWEEN</code> · <code>LIKE</code></div>
+    <p><code>IN ('US','UK')</code> matches any value in a list (cleaner than <code>= 'US' OR = 'UK'</code>). <code>BETWEEN a AND b</code> is an <b>inclusive</b> range (works for numbers and dates). <code>LIKE</code> pattern-matches text: <code>%</code> = any run of characters, <code>_</code> = exactly one. So <code>'%Q3%'</code> = "contains Q3", <code>'Q3%'</code> = "starts with Q3".</p></div>
+
+  <div class="concept"><div class="name"><code>NULL</code> — the big one</div>
+    <p>NULL means "unknown," and <b>any comparison to it returns unknown, not true</b>. So <code>WHERE company_size = NULL</code> matches nothing — you must use <code>IS NULL</code> / <code>IS NOT NULL</code>. <code>COALESCE(a, b, 'Unknown')</code> returns the first non-null value; <code>NULLIF(x, 0)</code> returns NULL when x = 0 (used to avoid divide-by-zero).</p></div>
+
+  <div class="concept"><div class="name">String functions</div>
+    <p><code>UPPER(x)</code> / <code>LOWER(x)</code> change case, <code>LENGTH(x)</code> counts characters, <code>TRIM(x)</code> strips spaces, <code>CONCAT(a, b)</code> or <code>a || b</code> joins text, <code>REPLACE(x,'a','b')</code> swaps, <code>SUBSTRING(x FROM 1 FOR 3)</code> slices. Case-insensitive matching: <code>LOWER(col) = 'email'</code> or Postgres's <code>ILIKE</code>.</p></div>
+
+  <div class="concept"><div class="name">Date functions</div>
+    <p><code>EXTRACT(MONTH FROM d)</code> pulls a part (YEAR/MONTH/DAY/DOW). <code>DATE_TRUNC('month', d)</code> rounds a date down to the start of the month (great for grouping later). Date math works directly: <code>CURRENT_DATE - created_date</code> gives days elapsed.</p></div>
+
+  <h2><span class="n">PRACTICE</span>10 queries on your data</h2>
+  <p class="muted">Try each before expanding "Check your answer."</p>
+
+  <div class="q"><div class="qh">1. Leads from the US or UK <span class="badge core">core</span></div>
+    <div class="hint">Hint: <code>IN</code> with a list.</div>
+    <details><summary>Check your answer</summary><pre><span class="kw">SELECT</span> * <span class="kw">FROM</span> leads <span class="kw">WHERE</span> country <span class="kw">IN</span> (<span class="st">'US'</span>,<span class="st">'UK'</span>);</pre></details></div>
+
+  <div class="q"><div class="qh">2. Leads created in July 2025 <span class="badge core">core</span></div>
+    <div class="hint">Hint: <code>BETWEEN</code> two dates (inclusive).</div>
+    <details><summary>Check your answer</summary><pre><span class="kw">SELECT</span> * <span class="kw">FROM</span> leads
+<span class="kw">WHERE</span> created_date <span class="kw">BETWEEN</span> <span class="st">'2025-07-01'</span> <span class="kw">AND</span> <span class="st">'2025-07-31'</span>;</pre></details></div>
+
+  <div class="q"><div class="qh">3. Campaigns whose name contains "Q3" <span class="badge core">core</span></div>
+    <div class="hint">Hint: <code>LIKE '%Q3%'</code>.</div>
+    <details><summary>Check your answer</summary><pre><span class="kw">SELECT</span> * <span class="kw">FROM</span> campaigns <span class="kw">WHERE</span> name <span class="kw">LIKE</span> <span class="st">'%Q3%'</span>;</pre></details></div>
+
+  <div class="q"><div class="qh">4. Campaigns whose name starts with "Q3" <span class="badge core">core</span></div>
+    <div class="hint">Hint: put the <code>%</code> only at the end.</div>
+    <details><summary>Check your answer</summary><pre><span class="kw">SELECT</span> * <span class="kw">FROM</span> campaigns <span class="kw">WHERE</span> name <span class="kw">LIKE</span> <span class="st">'Q3%'</span>;</pre></details></div>
+
+  <div class="q"><div class="qh">5. All "Email" campaigns, case-insensitive <span class="badge core">core</span></div>
+    <div class="hint">Hint: <code>ILIKE</code> (Postgres) or <code>LOWER(channel) = 'email'</code>.</div>
+    <details><summary>Check your answer</summary><pre><span class="kw">SELECT</span> * <span class="kw">FROM</span> campaigns <span class="kw">WHERE</span> channel <span class="kw">ILIKE</span> <span class="st">'email'</span>;
+<span class="cm">-- or: WHERE LOWER(channel) = 'email'</span></pre></details></div>
+
+  <div class="q"><div class="qh">6. Leads missing a company size <span class="badge core">core</span></div>
+    <div class="hint">Hint: <code>IS NULL</code> — never <code>= NULL</code>.</div>
+    <details><summary>Check your answer</summary><pre><span class="kw">SELECT</span> * <span class="kw">FROM</span> leads <span class="kw">WHERE</span> company_size <span class="kw">IS NULL</span>;</pre></details></div>
+
+  <div class="q"><div class="qh">7. Every lead's size, showing "Unknown" where it's missing <span class="badge core">core</span></div>
+    <div class="hint">Hint: <code>COALESCE</code> the column with a fallback string.</div>
+    <details><summary>Check your answer</summary><pre><span class="kw">SELECT</span> lead_id, <span class="fn">COALESCE</span>(company_size, <span class="st">'Unknown'</span>) <span class="kw">AS</span> size
+<span class="kw">FROM</span> leads;</pre></details></div>
+
+  <div class="q"><div class="qh">8. Bottom-of-funnel leads: status demo or won <span class="badge core">core</span></div>
+    <div class="hint">Hint: <code>IN</code> on <code>status</code>.</div>
+    <details><summary>Check your answer</summary><pre><span class="kw">SELECT</span> * <span class="kw">FROM</span> leads <span class="kw">WHERE</span> status <span class="kw">IN</span> (<span class="st">'demo'</span>,<span class="st">'won'</span>);</pre></details></div>
+
+  <div class="q"><div class="qh">9. Each lead's creation month number <span class="badge stretch">stretch</span></div>
+    <div class="hint">Hint: <code>EXTRACT(MONTH FROM created_date)</code>.</div>
+    <details><summary>Check your answer</summary><pre><span class="kw">SELECT</span> lead_id, created_date,
+       <span class="fn">EXTRACT</span>(<span class="kw">MONTH FROM</span> created_date) <span class="kw">AS</span> mth
+<span class="kw">FROM</span> leads;</pre></details></div>
+
+  <div class="q"><div class="qh">10. Campaign names in caps, with their length <span class="badge stretch">stretch</span></div>
+    <div class="hint">Hint: <code>UPPER()</code> and <code>LENGTH()</code>.</div>
+    <details><summary>Check your answer</summary><pre><span class="kw">SELECT</span> <span class="fn">UPPER</span>(name) <span class="kw">AS</span> name_up, <span class="fn">LENGTH</span>(name) <span class="kw">AS</span> chars
+<span class="kw">FROM</span> campaigns;</pre></details></div>
+
+  <h2><span class="n">WATCH</span>Gotchas to note</h2>
+  <div class="gotcha">💡 <strong><code>= NULL</code> matches nothing.</strong> Use <code>IS NULL</code> / <code>IS NOT NULL</code>. And <code>status &lt;&gt; 'won'</code> <em>excludes</em> NULL rows too — for "not won, including unknowns" write <code>status &lt;&gt; 'won' OR status IS NULL</code>.</div>
+  <div class="gotcha">💡 <strong><code>LIKE</code> is case-sensitive in Postgres.</strong> <code>'%q3%'</code> won't match <code>'Q3'</code>. Use <code>ILIKE</code> or wrap in <code>LOWER()</code>.</div>
+  <div class="gotcha">💡 <strong><code>BETWEEN</code> is inclusive on both ends</strong> — and for timestamps, <code>BETWEEN '2025-07-01' AND '2025-07-31'</code> stops at midnight of the 31st, missing that day's events. Prefer <code>&gt;= '2025-07-01' AND &lt; '2025-08-01'</code> for timestamps.</div>
+  <p class="muted">Add each quirk to your notebook — this becomes your Day-9 dialect notes and interview cheat-sheet.</p>
+
+  <h2><span class="n">WRAP</span>Before you close the laptop</h2>
+  <ul class="check">
+    <li>All 10 queries run and return sensible rows</li>
+    <li>You can explain why <code>= NULL</code> fails, from memory</li>
+    <li>Solved 6 "Easy" questions on DataLemur</li>
+    <li>Gotchas noted</li>
+    <li>Checked off Day 2 in <a href="http://localhost:8000" target="_blank">prep-coach</a> + logged your applications</li>
+  </ul>
+  <p><strong>Tomorrow (Day 3):</strong> aggregation — GROUP BY, HAVING, and conditional aggregation (the "metrics per segment" workhorse).</p>
+
+  <footer>prep-coach · Day 2 handout · part of the <a href="https://priandproper.github.io/prep-coach/bootcamp.html" target="_blank">10-Day SQL Bootcamp</a>.</footer>
+</div>
+</body>
+</html>
