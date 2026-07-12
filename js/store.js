@@ -82,6 +82,8 @@ function defaults() {
     progress: {
       // keyed by ISO date: { taskIds:[], studyMinutes, blocksCompleted, spaceUsed }
       days: {},
+      dayCursor: 0,        // self-paced: current 0-based sprint day (advances on completion)
+      doneTasks: [],       // completed task ids (e.g. 't2:0'), independent of the calendar
       streak: 0,
       lastCompletedDate: null,
       // weekly job-search log keyed by week-start ISO: { applications, coffeeChats }
@@ -127,6 +129,26 @@ function migrate(s) {
       if (o) { t.title = o.title; t.summary = o.summary; t.checklist = o.checklist.slice(); t.resourceRefs = o.resourceRefs.slice(); }
     }
     s.plan.contentVersion = SQL_PLAN.contentVersion;
+  }
+
+  // Migrate to the self-paced model: gather completed task ids from the old
+  // calendar-keyed records, and set the day cursor to the number of fully-done
+  // leading days so the user lands where they actually are (not a calendar day).
+  if (s.progress.doneTasks == null) {
+    const all = new Set();
+    for (const iso in (s.progress.days || {})) {
+      for (const id of (s.progress.days[iso].taskIds || [])) all.add(id);
+    }
+    s.progress.doneTasks = [...all];
+  }
+  if (s.progress.dayCursor == null) {
+    const done = new Set(s.progress.doneTasks);
+    let c = 0;
+    for (const t of (s.plan.topics || [])) {
+      const items = t.checklist || [];
+      if (items.length && items.every((_, i) => done.has(`${t.id}:${i}`))) c++; else break;
+    }
+    s.progress.dayCursor = c;
   }
   return s;
 }

@@ -17,8 +17,8 @@ let focusSeconds = 0;         // accumulated focused (work-phase) seconds this s
 let heroTaskIdx = null;       // which task is showing in the center dial
 
 // ---- task derivation ----
-export function tasksForDay(iso, sched, plan) {
-  const day = sched.days.find(d => d.iso === iso);
+// `day` is a sprint-day object with .topics; returns its checklist as task items.
+export function tasksForDay(day) {
   if (!day) return [];
   const out = [];
   for (const t of day.topics) {
@@ -29,38 +29,9 @@ export function tasksForDay(iso, sched, plan) {
   return out;
 }
 
-function dayComplete(iso, sched, plan) {
-  const tasks = tasksForDay(iso, sched, plan);
-  if (!tasks.length) return false;
-  const rec = store.progress().days[iso];
-  const done = new Set(rec ? rec.taskIds : []);
-  return tasks.every(t => done.has(t.id));
-}
-
-// A day "counts" on a low, protectable bar: any task checked OR any focused time.
-function isActiveDay(iso) {
-  const rec = store.progress().days[iso];
-  if (!rec) return false;
-  return (rec.taskIds && rec.taskIds.length > 0) || (rec.studyMinutes || 0) > 0;
-}
-
-// Forgiving streak: a single missed day is auto-bridged (up to 2 "freezes");
-// only two misses in a row actually break it. Never punishes one off day.
+// Self-paced: "days done" is simply the cursor, which advances only on completion.
 export function computeStreak() {
-  let iso = store.todayISO();
-  if (!isActiveDay(iso)) iso = store.addDays(iso, -1); // today may still be in progress
-  let streak = 0, freezes = 0, gap = 0;
-  const MAX_FREEZES = 2, MAX_ITER = 400;
-  for (let i = 0; i < MAX_ITER; i++) {
-    if (isActiveDay(iso)) { streak++; gap = 0; }
-    else {
-      gap++;
-      if (gap >= 2 || freezes >= MAX_FREEZES) break; // real break
-      freezes++; // bridge a single off day
-    }
-    iso = store.addDays(iso, -1);
-  }
-  return streak;
+  return store.progress().dayCursor || 0;
 }
 
 // ---- render ----
@@ -69,30 +40,23 @@ export function render(root) {
   const config = store.config();
   const sched = buildSchedule(plan, config);
   const iso = store.todayISO();
-  const dayIdx = currentDayIndex(plan);
+  const dayIdx = Math.max(0, Math.min(store.progress().dayCursor || 0, plan.horizonDays));
 
-  if (dayIdx === -1) {
-    mount(root, [h('div.card', {}, [
-      h('h2', {}, 'Your sprint hasn’t started yet'),
-      h('p.sub', {}, `It begins ${niceDate(plan.startDate)}. Change the start date in Setup to begin today.`),
-    ])]);
-    return;
-  }
   if (dayIdx >= plan.horizonDays) {
     mount(root, [h('div.banner.good', {}, [
       h('div.icon', {}, '🎉'),
-      h('div.body', {}, [h('h3', {}, 'Sprint complete'), h('p', {}, 'You reached the end of the horizon. Start a new plan in Plan, or extend the horizon in Setup.')]),
+      h('div.body', {}, [h('h3', {}, 'Sprint complete!'), h('p', {}, 'You finished all 10 days. Start a fresh plan in the Plan tab, or extend the horizon in Setup.')]),
     ])]);
     return;
   }
 
-  const tasks = tasksForDay(iso, sched, plan);
-  const rec = store.dayRecord(iso);
-  const done = new Set(rec.taskIds);
+  const dayObj = sched.days[dayIdx];
+  const tasks = tasksForDay(dayObj);
+  const done = new Set(store.progress().doneTasks || []);
   const doneCount = tasks.filter(t => done.has(t.id)).length;
   const allDone = tasks.length > 0 && doneCount === tasks.length;
   const dayPlan = store.dayRecord(iso).dayPlan || null;
-  const blocks = layoutDay(plan, config, sched, iso, dayPlan ? dayPlanToOverride(dayPlan) : null);
+  const blocks = layoutDay(plan, config, dayObj, dayPlan ? dayPlanToOverride(dayPlan) : null);
 
   mount(root, [homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allDone, blocks, dayPlan)]);
 }
@@ -102,9 +66,8 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
   ensurePomo(config);
   const total = tasks.length;
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
-  const streak = computeStreak(plan, sched);
-  const day = sched.days.find(d => d.iso === iso);
-  const topic = day && day.topics.length ? day.topics[0].title : 'Lighter day';
+  const day = sched.days[dayIdx];
+  const topic = day && day.topics.length ? day.topics[0].title : 'Rest day';
   const firstUndone = tasks.findIndex(t => !done.has(t.id));
 
   if (heroTaskIdx == null || heroTaskIdx < 0 || heroTaskIdx >= total) heroTaskIdx = Math.max(0, firstUndone);
@@ -122,12 +85,15 @@ function homeView(plan, config, sched, iso, dayIdx, tasks, done, doneCount, allD
     h('section.home-sec', {}, [
       h('div.sec-head', {}, [
         h('span.sec-title', {}, 'Study'),
-        h('span.sec-note', {}, `Day ${dayIdx + 1} · ${topic}${streak > 0 ? ` · ${streak}-day streak` : ''}`),
+        h('span.sec-note', {}, `Day ${dayIdx + 1} of ${plan.horizonDays} · ${topic}`),
       ]),
       h('div.home-hero', {}, [
-        total ? taskDial(iso, tasks, done, doneCount) : h('p.home-empty', {}, 'Nothing scheduled today — rest up.'),
-        total ? dotsRow(iso, tasks, done) : null,
-        h('button.btn.primary.focus-start', { onclick: () => { unlockAudio(); openFocusMode(config); } }, 'Start my session →'),
+        total ? taskDial(tasks, done, doneCount) : h('p.home-empty', {}, 'Nothing scheduled today — rest up.'),
+        total ? dotsRow(tasks, done) : null,
+        allDone
+          ? h('button.btn.primary.focus-start', { onclick: () => advanceDay(dayIdx, plan) },
+              dayIdx + 1 < plan.horizonDays ? `Day ${dayIdx + 1} done — start Day ${dayIdx + 2} →` : 'Finish the sprint →')
+          : h('button.btn.primary.focus-start', { onclick: () => { unlockAudio(); openFocusMode(config); } }, 'Start my session →'),
       ]),
     ]),
     // ── 2 · Job search ──
@@ -314,7 +280,7 @@ function taskKind(title) {
 }
 
 // Centerpiece: one task in a ring you can flip through and tap to complete.
-function taskDial(iso, tasks, done, doneCount) {
+function taskDial(tasks, done, doneCount) {
   const total = tasks.length;
   const t = tasks[heroTaskIdx];
   const isDone = t && done.has(t.id);
@@ -328,10 +294,10 @@ function taskDial(iso, tasks, done, doneCount) {
       '<circle class="td-prog" cx="90" cy="90" r="' + R + '" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '"/>' +
       '</svg>',
   });
-  ring.appendChild(h('div.td-center', { onclick: () => t && toggleTask(iso, t.id, !isDone) }, [
+  ring.appendChild(h('div.td-center', { onclick: () => t && toggleTask(t.id, !isDone) }, [
     h('div.td-kind', {}, taskKind(t.title)),
     h('div.td-title', {}, t.title),
-    h('div.td-action', {}, isDone ? '✓ done' : 'tap to complete'),
+    h('div.td-action', {}, isDone ? '✓ done · tap to undo' : 'tap to mark done'),
   ]));
   return h('div.td-wrap', {}, [
     h('button.td-nav', { 'aria-label': 'Previous task', onclick: () => { heroTaskIdx = (heroTaskIdx - 1 + total) % total; rerenderHome(); } }, '‹'),
@@ -340,7 +306,7 @@ function taskDial(iso, tasks, done, doneCount) {
   ]);
 }
 
-function dotsRow(iso, tasks, done) {
+function dotsRow(tasks, done) {
   return h('div.td-dots', {}, tasks.map((t, i) => h('button', {
     class: 'td-dot' + (done.has(t.id) ? ' done' : '') + (i === heroTaskIdx ? ' active' : ''),
     'aria-label': 'Task ' + (i + 1),
@@ -502,9 +468,9 @@ function rerenderFocus(config) {
 }
 
 // ---- full-screen focus mode ----
-function currentTaskInfo(iso, sched, plan) {
-  const tasks = tasksForDay(iso, sched, plan);
-  const done = new Set(store.dayRecord(iso).taskIds);
+function currentTaskInfo(sched, plan) {
+  const tasks = tasksForDay(sched.days[store.progress().dayCursor || 0]);
+  const done = new Set(store.progress().doneTasks || []);
   const next = tasks.find(t => !done.has(t.id));
   if (next) return { task: next.title, topic: next.topic.title };
   if (tasks.length) return { task: 'All of today’s tasks are done', topic: 'Bonus focus time' };
@@ -515,7 +481,7 @@ function openFocusMode(config) {
   const plan = store.plan();
   const sched = buildSchedule(plan, config);
   const iso = store.todayISO();
-  const info = currentTaskInfo(iso, sched, plan);
+  const info = currentTaskInfo(sched, plan);
   focusSeconds = 0;
   lastBase = 'idle';
 
@@ -688,21 +654,31 @@ function progressLine(label, val, target, pct) {
 }
 
 // ---- actions ----
-function toggleTask(iso, taskId, on) {
-  const rec = store.dayRecord(iso);
-  const set = new Set(rec.taskIds);
+function toggleTask(taskId, on) {
+  const p = store.progress();
+  const set = new Set(p.doneTasks || []);
   on ? set.add(taskId) : set.delete(taskId);
-  rec.taskIds = [...set];
+  p.doneTasks = [...set];
   store.save();
-  // Celebrate only the real milestone: clearing everything scheduled today.
+  // Celebrate clearing everything on the current day.
   if (on) {
     const plan = store.plan(), config = store.config();
-    const dayTasks = tasksForDay(iso, buildSchedule(plan, config), plan);
+    const dayObj = buildSchedule(plan, config).days[p.dayCursor || 0];
+    const dayTasks = tasksForDay(dayObj);
     if (dayTasks.length && dayTasks.every(t => set.has(t.id))) {
       burst({ origin: { x: 0.5, y: 0.4 } });
       toast('Day cleared — a vote for the analyst you’re becoming. ✓');
     }
   }
+}
+
+// Advance the self-paced cursor to the next day (called from the "Day done" button).
+function advanceDay(dayIdx, plan) {
+  const p = store.progress();
+  p.dayCursor = Math.min((p.dayCursor || 0) + 1, plan.horizonDays);
+  heroTaskIdx = null;
+  store.save();
+  if (p.dayCursor < plan.horizonDays) toast(`Day ${p.dayCursor + 1} unlocked — let’s go. 🌱`);
 }
 function logJob(field, n) {
   const week = store.weekStartISO();

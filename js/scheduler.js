@@ -96,8 +96,8 @@ export function fitAnalysis(plan, config) {
 // Returns [{ start:'HH:MM', end:'HH:MM', kind, title, detail, topicId? }].
 // `override` (optional) = { wakeTime, activities:[{label,minutes,time?,kind?}], jobMinutes }
 // from the day's planning questionnaire; falls back to config defaults.
-export function layoutDay(plan, config, sched, iso, override) {
-  const day = sched.days.find(d => d.iso === iso);
+// `day` is the sprint-day object (with .topics) to lay out.
+export function layoutDay(plan, config, day, override) {
   const blocks = [];
   const wakeStr = (override && override.wakeTime) || config.availability.wakeTime || '08:00';
   const activities = (override && override.activities) || config.activities || [];
