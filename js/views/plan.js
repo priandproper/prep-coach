@@ -12,7 +12,7 @@ export function render(root) {
   mount(root, [
     h('div.page-head', {}, [
       h('h1', {}, 'Study plan'),
-      h('p', {}, `${plan.goal} · ${plan.horizonDays}-day sprint starting ${niceDate(plan.startDate)}`),
+      h('p', {}, `${plan.goal} · ${plan.horizonDays}-day sprint · you’re on Day ${(store.progress().dayCursor || 0) + 1}`),
     ]),
     fitBanner(plan, config, fit),
     planControls(plan),
@@ -79,31 +79,50 @@ function planControls(plan) {
     h('div.inline', {}, [
       h('label.field', {}, [h('span', {}, 'Goal'),
         h('input', { type: 'text', value: plan.goal, onchange: e => { plan.goal = e.target.value; store.save(); } })]),
-      h('label.field', {}, [h('span', {}, 'Start date'),
-        h('input', { type: 'date', value: plan.startDate, onchange: e => { plan.startDate = e.target.value; store.save(); toast('Start date updated.'); } })]),
       h('label.field', {}, [h('span', {}, 'Horizon (days, max 14)'),
         h('input', { type: 'number', min: 1, max: 14, value: plan.horizonDays, onchange: e => { plan.horizonDays = clamp(+e.target.value, 1, 14); store.save(); } })]),
     ]),
-    h('div.btn-row', {}, [
-      h('button.btn.sm', { onclick: () => { plan.startDate = store.todayISO(); store.save(); toast('Day 1 is today. 🌱'); } }, '▶ Start today (Day 1 = today)'),
-      h('button.btn.ghost.sm', { onclick: () => modal({ title: 'Reset to the 10-day SQL plan?', body: 'This replaces your current topics with the preloaded curriculum and sets the start date to today. Progress is kept.', confirmText: 'Reset plan', danger: true, onConfirm: () => { store.loadSamplePlan(); toast('Preloaded SQL plan restored.'); } }) }, '↺ Reset to preloaded SQL plan'),
+    h('p.hint', {}, 'Days are self-paced — the sprint advances when you finish a day, not by the calendar. Use “Start here” below to jump to a day.'),
+    h('div.btn-row.mt', {}, [
+      h('button.btn.ghost.sm', { onclick: () => modal({ title: 'Reset to the 10-day SQL plan?', body: 'This replaces your current topics with the preloaded curriculum. Progress is kept.', confirmText: 'Reset plan', danger: true, onConfirm: () => { store.loadSamplePlan(); toast('Preloaded SQL plan restored.'); } }) }, '↺ Reset to preloaded SQL plan'),
     ]),
   ]);
 }
 
+// Jump the self-paced cursor to a day and start it fresh (clears that day onward).
+function startHere(i, sched) {
+  modal({
+    title: `Start from Day ${i + 1}?`,
+    body: `This makes Day ${i + 1} your current day and clears any ticked tasks from Day ${i + 1} onward so you begin it fresh. Earlier days stay as they are.`,
+    confirmText: `Start Day ${i + 1}`,
+    onConfirm: () => {
+      const p = store.progress();
+      const laterIds = new Set();
+      sched.days.slice(i).forEach(d => d.topics.forEach(t =>
+        (t.checklist || []).forEach((_, k) => laterIds.add(`${t.id}:${k}`))));
+      p.doneTasks = (p.doneTasks || []).filter(id => !laterIds.has(id));
+      p.dayCursor = i;
+      store.save();
+      toast(`Day ${i + 1} — fresh start. 🌱`);
+    },
+  });
+}
+
 function daysList(plan, config, sched) {
-  const today = store.todayISO();
+  const cursor = store.progress().dayCursor || 0;
   const cards = sched.days.map((day, i) => {
-    const isToday = day.iso === today;
-    const isPast = day.iso < today;
+    const isCurrent = i === cursor;
+    const isPast = i < cursor;
     const load = day.topics.reduce((s, t) => s + t.estHours, 0);
-    return h('div', { class: 'day-card' + (isToday ? ' today' : '') + (isPast ? ' past' : '') }, [
+    return h('div', { class: 'day-card' + (isCurrent ? ' today' : '') + (isPast ? ' past' : '') }, [
       h('div.day-head', {}, [
         h('div', {}, [
           h('span.dt', {}, `Day ${i + 1}`),
-          h('span.dm', {}, `  ·  ${niceDate(day.iso)}${isToday ? '  · today' : ''}`),
+          h('span.dm', {}, isCurrent ? '  ·  current' : (isPast ? '  ·  done' : `  ·  ${fmtHours(load)}`)),
         ]),
-        h('span.dm', {}, `${fmtHours(load)} / ${fmtHours(day.capacity)} capacity`),
+        isCurrent
+          ? h('span.dm', {}, 'you’re here')
+          : h('button.btn.sm.ghost', { onclick: () => startHere(i, sched) }, 'Start here'),
       ]),
       h('div.day-body', {}, day.topics.length
         ? day.topics.map(t => h('div', { style: 'padding:6px 0' }, [
